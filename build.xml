@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="jdoctest" basedir="." default="none">
+
+<description>
+JDoctest build file.
+</description>
+<property name="package" value="jdoctest" />
+<property name="package_topdir" value="net/cscott/jdoctest" />
+<property name="version" value="0.1" /> <!-- change version # here! -->
+
+    <!-- define some variables for the script -->
+    <target name="init">
+      <!-- load the variable definitions from another file -->
+      <property file="build.properties" />
+      <!-- define other variables -->
+      <property name="api_dir"            value="${basedir}/api"/>
+      <property name="lib_dir"            value="${basedir}/lib"/>
+      <property name="src_dir"            value="${basedir}/src"/>
+      <property name="classes_dir"	value="${basedir}/bin"/>
+      <!-- set the classpath -->
+      <fileset id="jar.set" dir="lib">
+        <include name="*.jar" />
+      </fileset>
+      <path id="classpath.path">
+        <pathelement path="${classes_dir}"/>
+	<fileset refid="jar.set" />
+	<pathelement path="${jdk.home}/lib/tools.jar"/>
+      </path>
+    </target>
+
+    <target name="none">
+            <echo>Type 'ant -projecthelp' for possible targets.</echo>
+    </target>
+
+    <!-- delete generated files -->
+    <target name="clean" depends="init"
+            description="Removes the generated class files and javadoc">
+	<delete dir="${classes_dir}" />
+	<delete dir="${api_dir}" />
+	<delete file="${basedir}/${ant.project.name}.jar" />
+        <delete file="src/${package_topdir}/Version.java" />
+    </target>
+
+    <!-- make the version file -->
+    <target name="chk-version"
+	    description="Generates Version.java.tmp and sets the
+			 version.uptodate property to false if it should
+			 be moved to replace Version.java" >
+      <copy file="src/${package_topdir}/Version.java.in"
+            tofile="src/${package_topdir}/Version.java.tmp" >
+        <filterset>
+         <filter token="VERSION" value="${version}"/>
+         <filter token="PACKAGE" value="${package}"/>
+        </filterset>
+      </copy>
+      <condition property="version.uptodate">
+	<filesmatch file1="src/${package_topdir}/Version.java"
+		    file2="src/${package_topdir}/Version.java.tmp" />
+      </condition>
+    </target>
+    <target name="move-version" depends="chk-version" unless="version.uptodate"
+	    description="Renames Version.java.tmp iff it is different
+			 from Version.java">
+      <!-- be careful only to overwrite Verson.java if there are changes -->
+      <move file="src/${package_topdir}/Version.java.tmp"
+	    tofile="src/${package_topdir}/Version.java" />
+    </target>
+    <target name="version"
+	    description="Generates Version.java with the correct
+			 version number."
+	    depends="move-version">
+      <!-- clean up the temp file in any case -->
+      <delete file="src/${package_topdir}/Version.java.tmp" />
+    </target>
+    <target name="echo-version" depends="init"
+            description="Print the current version number." >
+      <echo message="Current version of ${package} is: ${version}" />
+    </target>
+
+    <!-- compile the source code -->
+    <target name="compile" depends="init,version"
+            description="Compiles the code in ${src_dir} to ${classes_dir}">
+	    <mkdir dir="${classes_dir}" />
+	    <javac srcdir="${src_dir}"
+		   destdir="${classes_dir}"
+		   excludes=".git"
+		   deprecation="on" source="1.4" target="1.4" debug="true">
+		   <classpath refid="classpath.path" />
+	    </javac>
+    </target>
+
+    <!-- run the javadoc tool on the source code -->
+    <target name="chk-javadoc" depends="init" >
+      <uptodate property="javadoc.notRequired"
+                targetfile="${api_dir}/index.html">
+        <srcfiles dir="${src_dir}" includes="**/*.java **/*.html" />
+      </uptodate>
+    </target>
+    <target name="javadoc"
+	    depends="compile,chk-javadoc" unless="javadoc.notRequired"
+            description="Generates javadoc in ${api_dir}">
+	<mkdir dir="${api_dir}" />
+	<javadoc sourcepath="${src_dir}"
+		 packagenames="net.cscott.*"
+		 destdir="${api_dir}"
+                 windowtitle="${package} ${version} documentation"
+		 doctitle="JDoctest"
+                 header="${ant.project.name} ${version}"
+		 source="1.4"
+		 bottom="Copyright (c) 2009 C. Scott Ananian"
+                 access="protected" nodeprecated="false"
+                 author="true" use="true" version="true" breakiterator="true">
+		<classpath refid="classpath.path" />
+            <link href="http://java.sun.com/javase/6/docs/api"/>
+	    <link href="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec/"/>
+	</javadoc>
+    </target>
+
+    <!-- export the project as a jar -->
+    <target name="jar" depends="compile"
+            description="Exports the project as a jar">
+	<jar destfile="${basedir}/${ant.project.name}.jar"
+             update="true">
+		<fileset dir="${classes_dir}" />
+	</jar>
+    </target>
+
+    <!-- most ant scripts have a build target -->
+    <target name="build" depends="jar" description="Alias for jar target"/>
+
+    <!-- bundle up all files for distribution -->
+    <target name="dist" depends="jar,javadoc">
+      <!--
+      <delete file="ChangeLog" />
+      <exec executable="cvs2cl" />
+      -->
+      <tar destfile="${package}-${version}.tar.gz" compression="gzip">
+        <tarfileset dir="api" prefix="${package}-${version}/api" />
+        <tarfileset dir="src" prefix="${package}-${version}/src"
+                    includes="**/*.java **/*.html **/*.java.in"
+                    excludes=".git" />
+        <tarfileset dir="lib" prefix="${package}-${version}/lib"
+                    excludes="CVS" />
+        <tarfileset dir="." prefix="${package}-${version}"
+         includes="README AUTHORS COPYING ChangeLog NEWS
+                   build.xml" />
+      </tar>
+    </target>
+</project>

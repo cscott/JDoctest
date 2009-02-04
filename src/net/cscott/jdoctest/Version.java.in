@@ -1,0 +1,23 @@
+// -*-java-*-
+package net.cscott.jdoctest;
+
+/**
+ * The <code>Version</code> object contains fields naming the current version
+ * of the @PACKAGE@ application (@VERSION@).
+ */
+public abstract class Version {
+    /** The name of the package. */
+    public static final String PACKAGE_NAME = "@PACKAGE@";
+    /** The version of the package. */
+    public static final String PACKAGE_VERSION = "@VERSION@";
+    /** The package name and version as one string. */
+    public static final String PACKAGE_STRING=PACKAGE_NAME+" "+PACKAGE_VERSION;
+    /** The address to which bug reports should be sent. */
+    public static final String PACKAGE_BUGREPORT = "jdoctest@cscott.net";
+
+    /** Prints the package version if invoked. */
+    public static void main(String[] args) {
+	System.out.println(PACKAGE_STRING);
+	System.out.println("Bug reports to "+PACKAGE_BUGREPORT);
+    }
+}
