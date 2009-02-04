@@ -19,7 +19,8 @@ JDoctest build file.
       <property name="classes_dir"	value="${basedir}/bin"/>
       <!-- set the classpath -->
       <fileset id="jar.set" dir="lib">
-        <include name="*.jar" />
+	<!-- use js.jar if you've got a 1.5 or greater jdk -->
+        <include name="rhino*/js-14.jar" />
       </fileset>
       <path id="classpath.path">
         <pathelement path="${classes_dir}"/>
@@ -97,7 +98,7 @@ JDoctest build file.
       </uptodate>
     </target>
     <target name="javadoc"
-	    depends="compile,chk-javadoc" unless="javadoc.notRequired"
+	    depends="jar,chk-javadoc" unless="javadoc.notRequired"
             description="Generates javadoc in ${api_dir}">
 	<mkdir dir="${api_dir}" />
 	<javadoc sourcepath="${src_dir}"
@@ -109,10 +110,13 @@ JDoctest build file.
 		 source="1.4"
 		 bottom="Copyright (c) 2009 C. Scott Ananian"
                  access="protected" nodeprecated="false"
-                 author="true" use="true" version="true" breakiterator="true">
-		<classpath refid="classpath.path" />
-            <link href="http://java.sun.com/javase/6/docs/api"/>
-	    <link href="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec/"/>
+                 author="true" use="true" version="true"
+		 breakiterator="true">
+	  <taglet name="net.cscott.jdoctest.JDoctest"
+		  path="${package}.jar" />
+	  <classpath refid="classpath.path" />
+          <link href="http://java.sun.com/javase/6/docs/api"/>
+	  <link href="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec/"/>
 	</javadoc>
     </target>
 
