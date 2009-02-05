@@ -28,7 +28,7 @@ To invoke from the command line:
 
  javadoc -taglet net.cscott.jdoctest.JDoctest \
          -tagletpath lib/jdoctest/jdoctest.jar:lib/jdoctest/js.jar:bin \
-	 -J-ea
+	 -J-ea \
          <your other javadoc options go here>
 
   We're assuming that your source code has been compiled into 'bin'.  Note
