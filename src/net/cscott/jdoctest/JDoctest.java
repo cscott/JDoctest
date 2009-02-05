@@ -62,6 +62,8 @@ import org.mozilla.javascript.tools.shell.Global;
  *   java.lang.Object@1ac2f9c
  */
 public class JDoctest implements Taglet {
+    private DocErrorReporter docErrorReporter = null;
+    private static boolean versionPrinted = false;
     /**
      * Return the name of this custom tag.
      * @doc.test
@@ -132,11 +134,27 @@ public class JDoctest implements Taglet {
      */
     public static void register(Map tagletMap) {
        JDoctest taglet = new JDoctest();
+       // this is an evil hack: try to fetch the rootDoc from the
+       // standard HTML doclet, in order to get a DocErrorReporter
+       try {
+	   taglet.docErrorReporter =
+	       com.sun.tools.doclets.standard.Standard.htmlDoclet
+	       .configuration().root;
+       } catch (Throwable t) {
+	   /* ignore: we'll do the compatible thing and just emit
+	    * errors to stderr */
+       }
        Taglet t = (Taglet) tagletMap.get(taglet.getName());
        if (t != null) {
            tagletMap.remove(taglet.getName());
        }
        tagletMap.put(taglet.getName(), taglet);
+       if (taglet.docErrorReporter!=null && !versionPrinted) {
+	   taglet.docErrorReporter.printNotice
+	       (Version.PACKAGE_STRING+"; "+
+		"Bug reports to "+Version.PACKAGE_BUGREPORT);
+	   versionPrinted = true;
+       }
     }
     /**
      * Given the <code>Tag</code> representation of this custom
@@ -195,11 +213,17 @@ public class JDoctest implements Taglet {
 	    int testsRun = global.runDoctest(cx, global, test_text,
 					     sp.file().getName(), sp.line());
 	    testsPassed += testsRun;
+	    if (docErrorReporter!=null && false /* too noisy */)
+		docErrorReporter.printNotice(sp, testsRun+" tests passed.");
 	} catch (RhinoException e) {
 	    fail = e.getMessage();
 	    testsFailed += 1;
-	    System.err.println("DOCTEST FAILURE at "+sp);
-	    System.err.println(fail);
+	    if (docErrorReporter!=null)
+		docErrorReporter.printError(sp, fail);
+	    else {
+		System.err.println("DOCTEST FAILURE at "+sp);
+		System.err.println(fail);
+	    }
 	} finally {
 	    Context.exit();
 	}
