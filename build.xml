@@ -6,7 +6,7 @@ JDoctest build file.
 </description>
 <property name="package" value="jdoctest" />
 <property name="package_topdir" value="net/cscott/jdoctest" />
-<property name="version" value="1.0" /> <!-- change version # here! -->
+<property name="version" value="1.1" /> <!-- change version # here! -->
 
     <!-- define some variables for the script -->
     <target name="init">
