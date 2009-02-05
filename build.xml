@@ -113,7 +113,7 @@ JDoctest build file.
                  author="true" use="true" version="true"
 		 breakiterator="true">
 	  <taglet name="net.cscott.jdoctest.JDoctest"
-		  path="${package}.jar" />
+		  path="${package}.jar:lib/rhino1_7R2-RC3/js-14.jar" />
 	  <classpath refid="classpath.path" />
           <link href="http://java.sun.com/javase/6/docs/api"/>
 	  <link href="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec/"/>
