@@ -1,12 +1,12 @@
-JDoctest is an implementation of Python doctest for Java, based on the
+JDoctest is an implementation of Python's doctest for Java, based on the
 ideas in doctestj (http://code.google.com/p/doctestj/) and Rhino
 (http://blog.norrisboyd.com/2008/03/doctest-in-rhino.html).
 
-Unlike doctestj, JDoctest is a Taglet, rather than a Doclet.  It doesn't
-replace the standard javadoc, it just adds the @test tag.
-We also use a multiline format similar to Python's doctest (based on Rhino's
-implementation) rather than insist on a single evaluated expression, as
-doctestj does.
+Unlike doctestj, JDoctest is a javadoc Taglet, rather than a Doclet.
+It doesn't replace the standard javadoc, it just adds a new @doc.test
+tag.  We also use a multiline format similar to Python's doctest
+(based on Rhino's implementation) rather than insist on a single
+evaluated expression, as doctestj does.
 
 To build:
  * Copy sample.build.properties to build.properties and edit it to
