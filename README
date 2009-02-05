@@ -9,11 +9,62 @@ implementation) rather than insist on a single evaluated expression, as
 doctestj does.
 
 To build:
+ * Copy sample.build.properties to build.properties and edit it to
+   properly reflect that path to your JDK.  (We need to use the tools.jar
+   file from the JDK, so we need to know where to find it.)
+ * Run 'ant javadoc', which will build the source code and then run its
+   doctests.
+ * One failure is to be expected as the tests are run; it is included
+   to show the results of a failing test in the output javadoc.
 
-To invoke:
+To install:
+
+ * Move the generated jdoctest.jar as well as lib/rhino*/js.jar to
+   a directory in your project.  If your project uses a pre-1.5 JDK,
+   use lib/rhino*/js-14.jar instead of js.jar.  Below, we will assume
+   that you've placed both these files in lib/jdoctest in your project.
+
+To invoke from the command line:
+
+ javadoc -taglet net.cscott.jdoctest.JDoctest \
+         -tagletpath lib/jdoctest/jdoctest.jar:lib/jdoctest/js.jar:bin \
+         <your other javadoc options go here>
+
+  We're assuming that your source code has been compiled into 'bin'.  Note
+  that your compiled .class files must be included on the tagletpath so that
+  we can run the doctests.  Use js-14.jar instead of js.jar if your project
+  uses a pre-1.5 JDK.
 
 Ant rule:
+  <javadoc ...>
+    <taglet name="net.cscott.jdoctest.JDoctest"
+            path="lib/jdoctest/jdoctest.jar:lib/jdoctest/js.jar:bin" />
+  </javadoc>
 
+  As before, replace 'bin' with the appropriate path to your compiled
+  project classes, and use js-14.jar instead of js.jar if your project
+  uses a pre-1.5 JDK.
+
+See the compiled javadoc for net.cscott.jdoctest.JDoctest for further
+examples of use.
 
 Other references:
   http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/taglet/overview.html
+
+LICENSE:
+    JDoctest, a doctest module for javadoc.
+    Copyright (C) 2009 C. Scott Ananian <cananian@alumni.princeton.edu>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA

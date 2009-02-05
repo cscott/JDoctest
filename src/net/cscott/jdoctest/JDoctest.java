@@ -1,4 +1,4 @@
-/**
+/*
  * JDocTaglet.
  * Copyright (c) 2009 C. Scott Ananian <cscott@cscott.net>
  *
@@ -50,8 +50,17 @@ import org.mozilla.javascript.tools.shell.Global;
  *   [JavaClass net.cscott.jdoctest.JDoctest]
  *   js> Version.PACKAGE_NAME
  *   jdoctest
+ * @doc.test
+ *   Note that results referencing object hashes are properly handled in
+ *   the output comparison function, even when Rhino gives a different hash
+ *   at runtime:
+ *   js> o = new java.lang.Object()
+ *   java.lang.Object@1d2068d
+ *   js> o
+ *   java.lang.Object@1d2068d
+ *   js> new java.lang.Object()
+ *   java.lang.Object@1ac2f9c
  */
-
 public class JDoctest implements Taglet {
     /**
      * Return the name of this custom tag.
@@ -119,7 +128,7 @@ public class JDoctest implements Taglet {
      *  {}
      *  js> JDoctest.register(m)
      *  js> m.get("doc.test")
-     *  <JDoctest instance>
+     *  net.cscott.jdoctest.JDoctest@de1b8a
      */
     public static void register(Map tagletMap) {
        JDoctest taglet = new JDoctest();
@@ -129,10 +138,6 @@ public class JDoctest implements Taglet {
        }
        tagletMap.put(taglet.getName(), taglet);
     }
-    /**
-     * @return "&lt;JDoctest instance&gt;"
-     */
-    public String toString() { return "<JDoctest instance>"; }
     /**
      * Given the <code>Tag</code> representation of this custom
      * tag, return its string representation.

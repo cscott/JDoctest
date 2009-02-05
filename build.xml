@@ -6,7 +6,7 @@ JDoctest build file.
 </description>
 <property name="package" value="jdoctest" />
 <property name="package_topdir" value="net/cscott/jdoctest" />
-<property name="version" value="0.1" /> <!-- change version # here! -->
+<property name="version" value="1.0" /> <!-- change version # here! -->
 
     <!-- define some variables for the script -->
     <target name="init">
@@ -146,7 +146,7 @@ JDoctest build file.
         <tarfileset dir="lib" prefix="${package}-${version}/lib"
                     excludes="CVS" />
         <tarfileset dir="." prefix="${package}-${version}"
-         includes="README AUTHORS COPYING ChangeLog NEWS
+         includes="README AUTHORS COPYING ChangeLog NEWS .gitignore
                    build.xml" />
       </tar>
     </target>

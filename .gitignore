@@ -1,4 +1,5 @@
 jdoctest.jar
+jdoctest-*.tar.gz
 bin
 api
 src/net/cscott/jdoctest/Version.java
