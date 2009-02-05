@@ -28,22 +28,28 @@ To invoke from the command line:
 
  javadoc -taglet net.cscott.jdoctest.JDoctest \
          -tagletpath lib/jdoctest/jdoctest.jar:lib/jdoctest/js.jar:bin \
+	 -J-ea
          <your other javadoc options go here>
 
   We're assuming that your source code has been compiled into 'bin'.  Note
   that your compiled .class files must be included on the tagletpath so that
   we can run the doctests.  Use js-14.jar instead of js.jar if your project
-  uses a pre-1.5 JDK.
+  uses a pre-1.5 JDK.  Note that you need to use the -J-ea option if you
+  want assertions to be enabled during the evaluation of the doctests.
+  You can use -J-ea:<your package>... to only enable assertions in your
+  code (not in the entire javadoc tool).
 
 Ant rule:
   <javadoc ...>
     <taglet name="net.cscott.jdoctest.JDoctest"
             path="lib/jdoctest/jdoctest.jar:lib/jdoctest/js.jar:bin" />
+    <arg value="-J-ea" />
   </javadoc>
 
   As before, replace 'bin' with the appropriate path to your compiled
   project classes, and use js-14.jar instead of js.jar if your project
-  uses a pre-1.5 JDK.
+  uses a pre-1.5 JDK.  The -J-ea option ensures assertions are enabled
+  in your code when doctests are evaluated.
 
 See the compiled javadoc for net.cscott.jdoctest.JDoctest for further
 examples of use.
