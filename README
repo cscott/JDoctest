@@ -40,7 +40,7 @@ To invoke from the command line:
   code (not in the entire javadoc tool).
 
 Ant rule:
-  <javadoc ...>
+  <javadoc failonerror="true" ...>
     <taglet name="net.cscott.jdoctest.JDoctest"
             path="lib/jdoctest/jdoctest.jar:lib/jdoctest/js.jar:bin" />
     <arg value="-J-ea" />
