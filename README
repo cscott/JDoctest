@@ -58,9 +58,11 @@ You may want to add css rules to make the output prettier.  JDoctest has
 hooks to allow the use of google-code-prettify:
    http://code.google.com/p/google-code-prettify/
 which will do syntax highlighting on the client side.  The build.xml
-file for JDoctest shows how this might be hooked up.  Note that javadoc's
-directory structure for the generated documentation makes it tedious
-to link to a top-level stylesheet from the generated documentation.
+file for JDoctest shows how this might be hooked up.  The files in
+src/doc-test should be copied to the top-level source directory of
+your project.  Note that javadoc's directory structure for the generated
+documentation makes it tedious to link to the top-level doc-files directory
+from the generated documentation.
 
 Other references:
   http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/taglet/overview.html
