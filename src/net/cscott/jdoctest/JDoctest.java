@@ -183,8 +183,12 @@ public class JDoctest implements Taglet {
     }
     private static String getPackage(Doc d) {
 	if (d instanceof ProgramElementDoc)
-	    return ((ProgramElementDoc)d).containingPackage().name();
-	assert false;
+	    return getPackage(((ProgramElementDoc)d).containingPackage());
+	if (d instanceof PackageDoc)
+	    return ((PackageDoc)d).name();
+	if (d instanceof RootDoc)
+	    return null; // "unnamed package"
+	assert false : "unknown Doc type "+d;
 	return null;
     }
 
@@ -201,13 +205,15 @@ public class JDoctest implements Taglet {
 
 	String fail = null;
 	// Create Javascript context.
-	String prologue = "importPackage("+packageName+");";
+	String prologue = (packageName == null) ? null :
+	    ("importPackage("+packageName+");");
 	Context cx = Context.enter();
 	try {
 	    Global global = new Global(); // this is also a scope.
 	    global.init(cx);
 	    // import the package.
-	    cx.evaluateString(global, prologue, "<init>", 1, null);
+	    if (prologue!=null)
+		cx.evaluateString(global, prologue, "<init>", 1, null);
 	    // okay, evaluate the doctest.
 	    // if the tests fail, we will throw an exception here.
 	    int testsRun = global.runDoctest(cx, global, test_text,
