@@ -236,9 +236,9 @@ public class JDoctest implements Taglet {
 	// typeset the text.
 	String s = html_escape(test_text);
 	// text before the first js> is a test description.
-	Matcher mm = Pattern.compile("(?sm)\\A(.*?\\S.*?)(^js&gt;)")
+	Matcher mm = Pattern.compile("(?sm)\\A(.*?)(^js&gt;)")
 	    .matcher(s);
-	if (mm.find()) {
+	if (mm.find() && mm.end(1) > 0) {
 	    sb.append("<div class=\"doctest-info\">");
 	    sb.append(mm.group(1));
 	    sb.append("</div>");
