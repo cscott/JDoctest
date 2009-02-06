@@ -116,6 +116,13 @@ JDoctest build file.
 		  path="${package}.jar:lib/rhino1_7R2-RC3/js-14.jar"/>
 	  <arg value="-J-ea:net.cscott..." />
 	  <classpath refid="classpath.path" />
+	  <!-- fancy google code prettify support: see
+	       http://code.google.com/p/google-code-prettify/ -->
+	  <bottom><![CDATA[
+             Copyright &copy; 2009 C. Scott Ananian
+             <script type="text/javascript" src="doc-files/prettify.js"></script>
+	     <script type="text/javascript" src="doc-files/loadpretty.js"></script>
+          ]]></bottom>
           <link href="http://java.sun.com/javase/6/docs/api"/>
 	  <link href="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec/"/>
 	</javadoc>

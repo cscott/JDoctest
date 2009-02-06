@@ -8,6 +8,9 @@ tag.  We also use a multiline format similar to Python's doctest
 (based on Rhino's implementation) rather than insist on a single
 evaluated expression, as doctestj does.
 
+See the compiled javadoc for net.cscott.jdoctest.JDoctest for further
+examples of use.
+
 To build:
  * Copy sample.build.properties to build.properties and edit it to
    properly reflect that path to your JDK.  (We need to use the tools.jar
@@ -51,8 +54,13 @@ Ant rule:
   uses a pre-1.5 JDK.  The -J-ea option ensures assertions are enabled
   in your code when doctests are evaluated.
 
-See the compiled javadoc for net.cscott.jdoctest.JDoctest for further
-examples of use.
+You may want to add css rules to make the output prettier.  JDoctest has
+hooks to allow the use of google-code-prettify:
+   http://code.google.com/p/google-code-prettify/
+which will do syntax highlighting on the client side.  The build.xml
+file for JDoctest shows how this might be hooked up.  Note that javadoc's
+directory structure for the generated documentation makes it tedious
+to link to a top-level stylesheet from the generated documentation.
 
 Other references:
   http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/taglet/overview.html

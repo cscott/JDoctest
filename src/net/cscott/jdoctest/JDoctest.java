@@ -234,14 +234,29 @@ public class JDoctest implements Taglet {
 	    Context.exit();
 	}
 	// typeset the text.
-	sb.append("<pre>");
-	sb.append(html_escape(test_text));
+	String s = html_escape(test_text);
+	// text before the first js> is a test description.
+	Matcher mm = Pattern.compile("(?sm)\\A(.*?\\S.*?)(^js&gt;)")
+	    .matcher(s);
+	if (mm.find()) {
+	    sb.append("<div class=\"doctest-info\">");
+	    sb.append(mm.group(1));
+	    sb.append("</div>");
+	    s = s.substring(mm.start(2));
+	}
+	sb.append("<pre class=\"prettyprint lang-js\">");
+	// flag the js> and > prompts as "not code"
+	s = s.replaceAll("(?m)^(js|  )&gt;",
+			 "<span class=\"nocode doctest-prompt\">$0</span>");
+	// any remaining lines are responses, "not code"
+	s = s.replaceAll("(?m)^[^<].*$",
+			 "<span class=\"nocode doctest-output\">$0</span>");
+	sb.append(s);
 	sb.append("</pre>\n");
 	if (fail!=null) {
-	    sb.append("<div class=\"fail\" style=\"background:red;color:white;font-weight:bold;\">\n");
-	    sb.append("<pre>");
+	    sb.append("<pre class=\"doctest-fail\" style=\"background:red;color:white;font-weight:bold;\">");
 	    sb.append(html_escape(fail));
-	    sb.append("</pre></div>\n");
+	    sb.append("</pre>\n");
 	}
     }
 
