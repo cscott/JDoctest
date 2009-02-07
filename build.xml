@@ -6,7 +6,7 @@ JDoctest build file.
 </description>
 <property name="package" value="jdoctest" />
 <property name="package_topdir" value="net/cscott/jdoctest" />
-<property name="version" value="1.1" /> <!-- change version # here! -->
+<property name="version" value="1.2" /> <!-- change version # here! -->
 
     <!-- define some variables for the script -->
     <target name="init">
@@ -38,7 +38,7 @@ JDoctest build file.
             description="Removes the generated class files and javadoc">
 	<delete dir="${classes_dir}" />
 	<delete dir="${api_dir}" />
-	<delete file="${basedir}/${ant.project.name}.jar" />
+	<delete file="${basedir}/${package}-${version}.jar" />
         <delete file="src/${package_topdir}/Version.java" />
     </target>
 
@@ -113,7 +113,7 @@ JDoctest build file.
                  author="true" use="true" version="true"
 		 breakiterator="true">
 	  <taglet name="net.cscott.jdoctest.JDoctest"
-		  path="${package}.jar:lib/rhino1_7R2-RC3/js-14.jar"/>
+		  path="${package}-${version}.jar:lib/rhino1_7R2-RC3/js-14.jar"/>
 	  <arg value="-J-ea:net.cscott..." />
 	  <classpath refid="classpath.path" />
 	  <!-- fancy google code prettify support: see
@@ -147,7 +147,7 @@ for (var i=0; i != links.length; i++) {
     <!-- export the project as a jar -->
     <target name="jar" depends="compile"
             description="Exports the project as a jar">
-	<jar destfile="${basedir}/${ant.project.name}.jar"
+	<jar destfile="${basedir}/${package}-${version}.jar"
              update="true">
 		<fileset dir="${classes_dir}" />
 	</jar>
@@ -165,13 +165,15 @@ for (var i=0; i != links.length; i++) {
       <tar destfile="${package}-${version}.tar.gz" compression="gzip">
         <tarfileset dir="api" prefix="${package}-${version}/api" />
         <tarfileset dir="src" prefix="${package}-${version}/src"
-                    includes="**/*.java **/*.html **/*.java.in"
+                    includes="**/*.java **/*.html **/*.java.in
+			      **/*.js **/*.css"
                     excludes=".git" />
         <tarfileset dir="lib" prefix="${package}-${version}/lib"
                     excludes="CVS" />
         <tarfileset dir="." prefix="${package}-${version}"
          includes="README AUTHORS COPYING ChangeLog NEWS .gitignore
-                   build.xml" />
+                   build.xml ${package}-${version}.jar
+		   sample.build.properties" />
       </tar>
     </target>
 </project>

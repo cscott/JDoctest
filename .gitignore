@@ -1,4 +1,4 @@
-jdoctest.jar
+jdoctest-*.jar
 jdoctest-*.tar.gz
 bin
 api

@@ -22,7 +22,7 @@ To build:
 
 To install:
 
- * Move the generated jdoctest.jar as well as lib/rhino*/js.jar to
+ * Move the generated jdoctest-*.jar as well as lib/rhino*/js.jar to
    a directory in your project.  If your project uses a pre-1.5 JDK,
    use lib/rhino*/js-14.jar instead of js.jar.  Below, we will assume
    that you've placed both these files in lib/jdoctest in your project.
@@ -62,7 +62,9 @@ file for JDoctest shows how this might be hooked up.  The files in
 src/doc-test should be copied to the top-level source directory of
 your project.  Note that javadoc's directory structure for the generated
 documentation makes it tedious to link to the top-level doc-files directory
-from the generated documentation.
+from the generated documentation, but we add a <script> tag at the
+bottom of each javadoc page (using the -bottom option) to make it all
+work out.
 
 Other references:
   http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/taglet/overview.html
