@@ -171,6 +171,7 @@ public class JDoctest implements Taglet {
      * @param tags  the array of <code>Tag</code>s representing of this custom tag.
      */
     public String toString(Tag[] tags) {
+	if (tags.length == 0) return "";
 	StringBuilder sb = new StringBuilder();
 	sb.append("<dt><b>Tests:</b></dt><dd>");
 	for (int i=0; i<tags.length; i++) {
