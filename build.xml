@@ -120,24 +120,11 @@ JDoctest build file.
 	       http://code.google.com/p/google-code-prettify/ -->
 	  <bottom><![CDATA[
              Copyright &copy; 2009 C. Scott Ananian
-             <script type="text/javascript">
-// simple thunk to load the prettify code
-function loadScript(href) {
-    //trim 'stylesheet.css' off the end of the stylesheet url
-    idx = href.lastIndexOf('/');
-    href = (idx==-1)?"":href.substring(0, idx+1);
-    window['JAVADOC_BASE'] = href; // pass to loadpretty.js
-    ltgt = String.fromCharCode(60,62)
-    document.write(ltgt[0]+'script type="text/javascript" src="'+href+'doc-files/loadpretty.js"'+ltgt[1]+ltgt[0]+'/script'+ltgt[1]);
-}
-// find the path to the top-level stylesheet.
-links = document.getElementsByTagName("link");
-for (var i=0; i != links.length; i++) {
-    if (links[i].getAttribute("rel").toLowerCase()=="stylesheet") {
-	loadScript(links[i].getAttribute("href"));
-    }
-}
-             </script>
+<script type="text/javascript">
+window['JAVADOC_BASE'] = '{@docRoot}';
+</script>
+<script type="text/javascript" src="{@docRoot}/doc-files/loadpretty.js">
+</script>
           ]]></bottom>
           <link href="http://java.sun.com/javase/6/docs/api"/>
 	  <link href="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec/"/>
