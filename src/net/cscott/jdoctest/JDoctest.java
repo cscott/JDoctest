@@ -9,6 +9,10 @@ package net.cscott.jdoctest;
 import com.sun.tools.doclets.Taglet;
 import com.sun.javadoc.*;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.regex.*;
 import java.util.Map;
 
@@ -261,6 +265,28 @@ public class JDoctest implements Taglet {
 	    }
 	} finally {
 	    Context.exit();
+	}
+	// emit the test text to a file, if requested
+	String test_path = System.getProperty("net.cscott.jdoctest.output");
+	if (test_path != null) {
+	    File outdir = new File(test_path, packageName);
+	    File outf = new File(outdir, String.format
+				 ("test-%08x.js", new Object[]
+				     {Integer.valueOf(test_text.hashCode())}));
+	    try {
+		outdir.mkdirs(); // ensure directory exists
+		Writer w = new OutputStreamWriter
+		    (new FileOutputStream(outf),"utf-8");
+		w.write(sp.toString()+"\n\n");
+		w.write(prologue == null ? test_text :
+			test_text.replaceFirst("js>","js> "+prologue+"\njs>"));
+		w.close();
+	    } catch (IOException e) {
+		if (docErrorReporter!=null)
+		    docErrorReporter.printError(sp, "Couldn't write to "+outf);
+		else
+		    System.err.println("ERROR: Couldn't write to "+outf);
+	    }
 	}
 	// typeset the text.
 	String s = html_escape(test_text);
