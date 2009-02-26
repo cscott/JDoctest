@@ -30,7 +30,7 @@ import org.mozilla.javascript.tools.shell.Global;
  *   This is an example of a test which passes:
  *   js> "a".equals("a")
  *   true
- * @doc.test
+ * @doc.test (EXPECT FAIL)
  *   This is an example of a test which fails:
  *   js> 1+2
  *   5
@@ -193,16 +193,24 @@ public class JDoctest implements Taglet {
 	return null;
     }
 
-    private int testsPassed = 0, testsFailed = 0;
-    private static final Pattern initial_ws = Pattern.compile("\\n[ \\t]*");
+    private int testsExpectedPass = 0, testsExpectedFail = 0;
+    private int testsUnexpectedPass = 0, testsUnexpectedFail = 0;
+    private static final Pattern P_initial_ws =
+	Pattern.compile("\\n[ \\t]*");
+    private static final Pattern P_expect_fail =
+	Pattern.compile("\\bEXPECT\\s+FAIL\\b");
+    private static final Pattern P_test_descr =
+	Pattern.compile("(?sm)\\A(.*?)(^js&gt;)");
     private void doOne(String packageName, SourcePosition sp,
 		       String test_text, StringBuilder sb) {
 	// strip consistent indentation from all lines (based on first line)
-	Matcher m = initial_ws.matcher(test_text);
+	Matcher m = P_initial_ws.matcher(test_text);
 	if (m.find()) {
 	    String prefix = m.group();
 	    test_text = test_text.replaceAll(Pattern.quote(prefix), "\n");
 	}
+	// look for EXPECT FAIL in the test.
+	boolean expect_fail = P_expect_fail.matcher(test_text).find();
 
 	String fail = null;
 	// Create Javascript context.
@@ -219,17 +227,37 @@ public class JDoctest implements Taglet {
 	    // if the tests fail, we will throw an exception here.
 	    int testsRun = global.runDoctest(cx, global, test_text,
 					     sp.file().getName(), sp.line());
-	    testsPassed += testsRun;
-	    if (docErrorReporter!=null && false /* too noisy */)
-		docErrorReporter.printNotice(sp, testsRun+" tests passed.");
+	    if (expect_fail) {
+		testsUnexpectedPass += testsRun;
+		fail = "doctest unexpectedly passed.";
+		if (docErrorReporter!=null)
+		    docErrorReporter.printError(sp, fail);
+		else {
+		    System.err.println("DOCTEST UNEXPECTED PASS at "+sp);
+		}
+	    } else {
+		testsExpectedPass += testsRun;
+		if (docErrorReporter!=null && false /* too noisy */)
+		    docErrorReporter.printNotice(sp,
+						 testsRun+" tests passed.");
+	    }
 	} catch (RhinoException e) {
 	    fail = e.getMessage();
-	    testsFailed += 1;
-	    if (docErrorReporter!=null)
-		docErrorReporter.printError(sp, fail);
-	    else {
-		System.err.println("DOCTEST FAILURE at "+sp);
-		System.err.println(fail);
+	    if (expect_fail) {
+		testsExpectedFail += 1;
+		if (docErrorReporter!=null)
+		    docErrorReporter.printWarning(sp, "Doctest failed as expected at "+sp);
+		else {
+		    System.err.println("DOCTEST EXPECTED FAIL at "+sp);
+		}
+	    } else {
+		testsUnexpectedFail += 1;
+		if (docErrorReporter!=null)
+		    docErrorReporter.printError(sp, fail);
+		else {
+		    System.err.println("DOCTEST UNEXPECTED FAIL at "+sp);
+		    System.err.println(fail);
+		}
 	    }
 	} finally {
 	    Context.exit();
@@ -237,8 +265,7 @@ public class JDoctest implements Taglet {
 	// typeset the text.
 	String s = html_escape(test_text);
 	// text before the first js> is a test description.
-	Matcher mm = Pattern.compile("(?sm)\\A(.*?)(^js&gt;)")
-	    .matcher(s);
+	Matcher mm = P_test_descr.matcher(s);
 	if (mm.find() && mm.end(1) > 0) {
 	    sb.append("<div class=\"doctest-info\">");
 	    sb.append(mm.group(1));
@@ -261,7 +288,7 @@ public class JDoctest implements Taglet {
 	}
     }
 
-    private static final Pattern html_special = Pattern.compile("[<>&\"]");
+    private static final Pattern P_html_special = Pattern.compile("[<>&\"]");
     private static String html_escape_char(String s) {
 	assert s.length()==1;
 	switch (s.charAt(0)) {
@@ -273,7 +300,7 @@ public class JDoctest implements Taglet {
 	}
     }
     private static String html_escape(String s) {
-	Matcher m = html_special.matcher(s);
+	Matcher m = P_html_special.matcher(s);
 	StringBuffer sb = new StringBuffer();
 	while (m.find())
 	    m.appendReplacement(sb, html_escape_char(m.group()));
