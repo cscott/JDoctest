@@ -107,7 +107,7 @@ JDoctest build file.
                  windowtitle="${package} ${version} documentation"
 		 doctitle="JDoctest"
                  header="${ant.project.name} ${version}"
-		 source="1.5"
+		 source="1.4"
 		 bottom="Copyright (c) 2009 C. Scott Ananian"
                  access="protected" nodeprecated="false"
                  author="true" use="true" version="true"

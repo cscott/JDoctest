@@ -270,9 +270,8 @@ public class JDoctest implements Taglet {
 	String test_path = System.getProperty("net.cscott.jdoctest.output");
 	if (test_path != null) {
 	    File outdir = new File(test_path, packageName);
-	    File outf = new File(outdir, String.format
-				 ("test-%08x.js", new Object[]
-				     {Integer.valueOf(test_text.hashCode())}));
+	    String baseName=sp.file().getName().replaceFirst("\\..*","");
+	    File outf = new File(outdir, "test-"+baseName+"-"+sp.line()+".js");
 	    try {
 		outdir.mkdirs(); // ensure directory exists
 		Writer w = new OutputStreamWriter
