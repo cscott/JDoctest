@@ -181,7 +181,7 @@ public class JDoctest implements Taglet {
 	for (int i=0; i<tags.length; i++) {
 	    SourcePosition sp = tags[i].position();
 	    String pkg = getPackage(tags[i].holder());
-	    doOne(pkg, sp, tags[i].text(), sb);
+	    doOne(pkg, sp, i, tags[i].text(), sb);
 	}
 	sb.append("</dd>");
 	return sb.toString();
@@ -205,7 +205,7 @@ public class JDoctest implements Taglet {
 	Pattern.compile("\\bEXPECT\\s+FAIL\\b");
     private static final Pattern P_test_descr =
 	Pattern.compile("(?sm)\\A(.*?)(^js&gt;)");
-    private void doOne(String packageName, SourcePosition sp,
+    private void doOne(String packageName, SourcePosition sp, int tagNum,
 		       String test_text, StringBuilder sb) {
 	// strip consistent indentation from all lines (based on first line)
 	Matcher m = P_initial_ws.matcher(test_text);
@@ -271,7 +271,8 @@ public class JDoctest implements Taglet {
 	if (test_path != null) {
 	    File outdir = new File(test_path, packageName);
 	    String baseName=sp.file().getName().replaceFirst("\\..*","");
-	    File outf = new File(outdir, "test-"+baseName+"-"+sp.line()+".js");
+	    File outf = new File
+		(outdir, "test-"+baseName+"-"+sp.line()+"-"+(tagNum+1)+".js");
 	    try {
 		outdir.mkdirs(); // ensure directory exists
 		Writer w = new OutputStreamWriter
