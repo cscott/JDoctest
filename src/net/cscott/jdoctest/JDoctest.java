@@ -247,6 +247,8 @@ public class JDoctest implements Taglet {
 	    }
 	} catch (RhinoException e) {
 	    fail = e.getMessage();
+	    // hack layout a bit
+	    fail = fail.replaceAll("(?m)^(expected|actual): ", "$0\n");
 	    if (expect_fail) {
 		testsExpectedFail += 1;
 		if (docErrorReporter!=null)
