@@ -245,8 +245,16 @@ public class JDoctest implements Taglet {
 		    docErrorReporter.printNotice(sp,
 						 testsRun+" tests passed.");
 	    }
+	} catch (AssertionError e) {
+	    fail = e.getMessage();
+	    if (fail==null) fail="<unknown assertion failure>";
 	} catch (RhinoException e) {
 	    fail = e.getMessage();
+	    if (fail==null) fail="<unknown failure>";
+	} finally {
+	    Context.exit();
+	}
+	if (fail != null) {
 	    // hack layout a bit
 	    fail = fail.replaceAll("(?m)^(expected|actual): ", "$0\n");
 	    if (expect_fail) {
@@ -265,8 +273,6 @@ public class JDoctest implements Taglet {
 		    System.err.println(fail);
 		}
 	    }
-	} finally {
-	    Context.exit();
 	}
 	// emit the test text to a file, if requested
 	String test_path = System.getProperty("net.cscott.jdoctest.output");
