@@ -213,7 +213,7 @@ public class JDoctest implements Taglet {
 	    test_text = test_text.replaceAll(Pattern.quote(prefix), "\n");
 	}
 	// look for EXPECT FAIL in the test.
-	boolean expect_fail = P_expect_fail.matcher(test_text).find();
+        boolean expect_fail = expectFail(test_text);
 
 	String fail = null;
 	// Create Javascript context.
@@ -319,6 +319,12 @@ public class JDoctest implements Taglet {
 	    sb.append(html_escape(fail));
 	    sb.append("</pre>\n");
 	}
+    }
+    /** Export the EXPECT FAIL processing so it can be used by
+     *  {@link JDocJUnitTest}.
+     */
+    public static boolean expectFail(String test_text) {
+        return P_expect_fail.matcher(test_text).find();
     }
 
     private static final Pattern P_html_special = Pattern.compile("[<>&\"]");

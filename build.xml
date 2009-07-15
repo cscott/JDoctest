@@ -25,6 +25,7 @@ JDoctest build file.
       <path id="classpath.path">
         <pathelement path="${classes_dir}"/>
 	<fileset refid="jar.set" />
+        <pathelement path="lib/junit-4.6.jar"/>
 	<pathelement path="${jdk.home}/lib/tools.jar"/>
       </path>
     </target>
@@ -84,8 +85,14 @@ JDoctest build file.
 	    <mkdir dir="${classes_dir}" />
 	    <javac srcdir="${src_dir}"
 		   destdir="${classes_dir}"
-		   excludes=".git"
+		   excludes=".git **/JDocJUnitTest.java"
 		   deprecation="on" source="1.4" target="1.4" debug="true">
+		   <classpath refid="classpath.path" />
+	    </javac>
+	    <javac srcdir="${src_dir}"
+		   destdir="${classes_dir}"
+		   includes="**/JDocJUnitTest.java"
+		   deprecation="on" source="1.5" target="1.5" debug="true">
 		   <classpath refid="classpath.path" />
 	    </javac>
     </target>
@@ -107,7 +114,7 @@ JDoctest build file.
                  windowtitle="${package} ${version} documentation"
 		 doctitle="JDoctest"
                  header="${ant.project.name} ${version}"
-		 source="1.4"
+		 source="1.5"
 		 bottom="Copyright (c) 2009 C. Scott Ananian"
                  access="protected" nodeprecated="false"
                  author="true" use="true" version="true"
