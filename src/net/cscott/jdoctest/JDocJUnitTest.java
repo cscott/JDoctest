@@ -29,7 +29,7 @@ import org.mozilla.javascript.tools.shell.Global;
 public class JDocJUnitTest {
     /** Change this in a {@code @Before} method if your tests are in a different
      *  subdirectory. */
-    String testDir = "api/tests";
+    public static String testDir = "api/tests";
 
     @Test
     public void runAllDoctests() {
@@ -49,7 +49,7 @@ public class JDocJUnitTest {
                     failures.add("Can't read "+test);
                     continue;
                 }
-                boolean expect_fail = JDoctest.expectFail(test_text);
+                boolean expect_fail = Patterns.expectFail(test_text);
                 Global global = new Global(); // this is also a scope.
                 global.init(cx);
                 // okay, evaluate the doctest.

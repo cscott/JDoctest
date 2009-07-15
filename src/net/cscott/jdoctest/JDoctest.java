@@ -200,8 +200,6 @@ public class JDoctest implements Taglet {
     private int testsUnexpectedPass = 0, testsUnexpectedFail = 0;
     private static final Pattern P_initial_ws =
 	Pattern.compile("\\n[ \\t]*");
-    private static final Pattern P_expect_fail =
-	Pattern.compile("\\bEXPECT\\s+FAIL\\b");
     private static final Pattern P_test_descr =
 	Pattern.compile("(?sm)\\A(.*?)(^js&gt;)");
     private void doOne(String packageName, SourcePosition sp, int tagNum,
@@ -213,7 +211,7 @@ public class JDoctest implements Taglet {
 	    test_text = test_text.replaceAll(Pattern.quote(prefix), "\n");
 	}
 	// look for EXPECT FAIL in the test.
-        boolean expect_fail = expectFail(test_text);
+        boolean expect_fail = Patterns.expectFail(test_text);
 
 	String fail = null;
 	// Create Javascript context.
@@ -319,12 +317,6 @@ public class JDoctest implements Taglet {
 	    sb.append(html_escape(fail));
 	    sb.append("</pre>\n");
 	}
-    }
-    /** Export the EXPECT FAIL processing so it can be used by
-     *  {@link JDocJUnitTest}.
-     */
-    public static boolean expectFail(String test_text) {
-        return P_expect_fail.matcher(test_text).find();
     }
 
     private static final Pattern P_html_special = Pattern.compile("[<>&\"]");
