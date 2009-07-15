@@ -82,7 +82,8 @@ public class JDocJUnitTest {
             fail(failures.toString());
     }
     private static void collectAllTests(File testDir, List<File> results) {
-        assert testDir.isDirectory();
+        if (!testDir.isDirectory())
+            fail("JDoctest test directory "+testDir+" does not exist");
         for (File f : testDir.listFiles()) {
             if (f.isDirectory())
                 collectAllTests(f, results);
