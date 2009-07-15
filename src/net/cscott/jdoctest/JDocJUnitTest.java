@@ -9,9 +9,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.tools.shell.Global;
@@ -26,60 +30,77 @@ import org.mozilla.javascript.tools.shell.Global;
  * run all your doctests.
  * @author C. Scott Ananian
  */
+@RunWith(value = Parameterized.class)
 public class JDocJUnitTest {
-    /** Change this in a {@code @Before} method if your tests are in a different
-     *  subdirectory. */
-    public static String testDir = "api/tests";
+    private final String testFile;
+    public JDocJUnitTest(String testFile) {
+        this.testFile = testFile;
+    }
 
-    @Test
-    public void runAllDoctests() {
+    /** Reimplement this in your subclass to change the test directory. */
+    @Parameters
+    public static Collection<Object[]> listTests() {
+        return listTests("api/tests");
+    }
+    /** List all the javascript tests found beneath the given directory. */
+    public static Collection<Object[]> listTests(String testDir) {
         // find all the files underneath testDir
         List<File> tests = new ArrayList<File>();
         collectAllTests(new File(testDir), tests);
-        List<String> failures = new ArrayList<String>();
+        List<Object[]> result = new ArrayList<Object[]>();
+        for (File f : tests)
+            result.add(new Object[] { f.getPath() });
+        return result;
+    }
+
+    @Test
+    public void runDoctest() {
+        runDoctest(this.testFile);
+    }
+    // ------ Helper functions for easy re-use. --------
+    public static void runDoctest(String testFile) {
+        runDoctest(new File(testFile));
+    }
+    public static void runDoctest(File testFile) {
+        String testText;
+        try {
+            testText = readFully(testFile);
+        } catch (IOException e) {
+            fail("Can't read "+testFile);
+            return;
+        }
+        runDoctest(testFile.getPath(), testText);
+    }
+    public static void runDoctest(String testSource, String testText) {
         // Run each one in turn.
         Context cx = Context.enter();
         try {
-            String test_text;
-            for (File test: tests) {
-                // read the doctest text
-                try {
-                    test_text = readFully(test);
-                } catch (IOException e) {
-                    failures.add("Can't read "+test);
-                    continue;
-                }
-                boolean expect_fail = Patterns.expectFail(test_text);
-                Global global = new Global(); // this is also a scope.
-                global.init(cx);
-                // okay, evaluate the doctest.
-                // if the tests fail, we will throw an exception here.
-                String fail=null;
-                try {
-                    @SuppressWarnings("unused")
-                    int testsRun = global.runDoctest(cx, global, test_text,
-                                                     test.getName(), 1);
-                    // XXX: we don't handle EXPECT FAIL yet
-                } catch (AssertionError e) {
-                    fail = e.getMessage();
-                    if (fail==null) fail="<unknown assertion failure>";
-                } catch (RhinoException e) {
-                    fail = e.getMessage();
-                    if (fail==null) fail="<unknown failure>";
-                }
-                if (expect_fail) {
-                    fail = (fail!=null) ? null :
-                        "Expected to fail, but did not.";
-                }
-                if (fail!=null)
-                    failures.add(test+": "+fail);
+            boolean expect_fail = Patterns.expectFail(testText);
+            Global global = new Global(); // this is also a scope.
+            global.init(cx);
+            // okay, evaluate the doctest.
+            // if the tests fail, we will throw an exception here.
+            String fail=null;
+            try {
+                @SuppressWarnings("unused")
+                int testsRun = global.runDoctest(cx, global, testText,
+                                                 testSource, 1);
+            } catch (AssertionError e) {
+                fail = e.getMessage();
+                if (fail==null) fail="<unknown assertion failure>";
+            } catch (RhinoException e) {
+                fail = e.getMessage();
+                if (fail==null) fail="<unknown failure>";
             }
+            if (expect_fail) {
+                fail = (fail!=null) ? null :
+                    "Expected to fail, but did not.";
+            }
+            if (fail!=null)
+                fail(testSource+": "+fail);
         } finally {
             Context.exit();
         }
-        // okay, did we succeed?
-        if (!failures.isEmpty())
-            fail(failures.toString());
     }
     private static void collectAllTests(File testDir, List<File> results) {
         if (!testDir.isDirectory())
