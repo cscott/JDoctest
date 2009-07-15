@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" output="bin" path="src"/>
+	<classpathentry kind="var" path="JRE_LIB" sourcepath="JRE_SRC"/>
+	<classpathentry kind="con" path="/home/cananian/Projects/JDoctest/bin"/>
+	<classpathentry kind="lib" path="/home/cananian/Projects/JDoctest/lib/rhino1_7R2-RC3/js-14.jar"/>
+	<classpathentry kind="lib" path="/home/cananian/jdk1.6.0_11/lib/tools.jar"/>
+	<classpathentry kind="lib" path="lib/junit-4.6.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
