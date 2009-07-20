@@ -1,6 +1,5 @@
 package net.cscott.jdoctest;
 
-
 import static org.junit.Assert.fail;
 
 import java.io.File;
@@ -8,59 +7,33 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.tools.shell.Global;
 
-/**
- * This is a JUnit test which runs all of the doctests emitted by JDoctest.
- * Set the {@code net.cscott.jdoctest.output} property when you emit your
- * javadoc, and stand-alone versions of your tests will be emitted into the
- * specified directory.  Subclass this test class and add an method tagged with
- * {@code org.junit.Before} which sets the {@code testDir} field to the
- * directory you set {@code net.cscott.jdoctest.output} to, and JUnit will
- * run all your doctests.
- * @author C. Scott Ananian
- */
-@RunWith(value = Parameterized.class)
-public class JDocJUnitTest {
-    private final String testFile;
-    public JDocJUnitTest(String testFile) {
-        this.testFile = testFile;
-    }
-
-    /** Reimplement this in your subclass to change the test directory. */
-    @Parameters
-    public static Collection<Object[]> listTests() {
-        return listTests("api/tests");
-    }
-    /** List all the javascript tests found beneath the given directory. */
-    public static Collection<Object[]> listTests(String testDir) {
-        // find all the files underneath testDir
-        List<File> tests = new ArrayList<File>();
-        collectAllTests(new File(testDir), tests);
-        List<Object[]> result = new ArrayList<Object[]>();
-        for (File f : tests)
-            result.add(new Object[] { f.getPath() });
-        return result;
+/** Basic JUnit test: run the doc tests in the specific javascript file. */
+public class JUnitTestBridge {
+    public final File testFile;
+    public JUnitTestBridge(File testFile) { this.testFile = testFile; }
+    /* stand-alone! */
+    public static void main(String[] args) {
+        for (String a : args)
+            new JUnitTestBridge(new File(a)).runDoctest();
     }
 
     @Test
     public void runDoctest() {
         runDoctest(this.testFile);
     }
-    // ------ Helper functions for easy re-use. --------
+
+    // --- generic implementation, for reuse ---
     public static void runDoctest(String testFile) {
         runDoctest(new File(testFile));
     }
+
     public static void runDoctest(File testFile) {
         String testText;
         try {
@@ -71,6 +44,7 @@ public class JDocJUnitTest {
         }
         runDoctest(testFile.getPath(), testText);
     }
+
     public static void runDoctest(String testSource, String testText) {
         // Run each one in turn.
         Context cx = Context.enter();
@@ -102,7 +76,13 @@ public class JDocJUnitTest {
             Context.exit();
         }
     }
-    private static void collectAllTests(File testDir, List<File> results) {
+
+    public static void collectTestsFor(File rootDir, Class<?> testClass,
+                                       List<File> results) {
+        // XXX implement me
+    }
+
+    public static void collectAllTests(File testDir, List<File> results) {
         if (!testDir.isDirectory())
             fail("JDoctest test directory "+testDir+" does not exist");
         for (File f : testDir.listFiles()) {
@@ -112,6 +92,7 @@ public class JDocJUnitTest {
                 results.add(f);
         }
     }
+
     private static String readFully(File f) throws IOException {
         StringBuilder sb = new StringBuilder();
         char[] buf = new char[8192];

@@ -6,19 +6,27 @@
  */
 package net.cscott.jdoctest;
 
-import com.sun.tools.doclets.Taglet;
-import com.sun.javadoc.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.regex.*;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.tools.shell.Global;
+
+import com.sun.javadoc.Doc;
+import com.sun.javadoc.DocErrorReporter;
+import com.sun.javadoc.PackageDoc;
+import com.sun.javadoc.ProgramElementDoc;
+import com.sun.javadoc.RootDoc;
+import com.sun.javadoc.SourcePosition;
+import com.sun.javadoc.Tag;
+import com.sun.tools.doclets.Taglet;
 
 /**
  * JDoctest implementing doctests via a @doc.test taglet.  This tag can be

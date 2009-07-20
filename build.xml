@@ -85,13 +85,18 @@ JDoctest build file.
 	    <mkdir dir="${classes_dir}" />
 	    <javac srcdir="${src_dir}"
 		   destdir="${classes_dir}"
-		   excludes=".git **/JDocJUnitTest.java"
+		   excludes=".git
+			     **/JDoctestRunner.java
+	                     **/AllJDoctests.java
+			     **/JUnitTestBridge.java"
 		   deprecation="on" source="1.4" target="1.4" debug="true">
 		   <classpath refid="classpath.path" />
 	    </javac>
 	    <javac srcdir="${src_dir}"
 		   destdir="${classes_dir}"
-		   includes="**/JDocJUnitTest.java"
+		   includes="**/JDoctestRunner.java
+	                     **/AllJDoctests.java
+			     **/JUnitTestBridge.java"
 		   deprecation="on" source="1.5" target="1.5" debug="true">
 		   <classpath refid="classpath.path" />
 	    </javac>
