@@ -13,17 +13,17 @@ import org.junit.Test;
 /* basic command to make things go:
  * javadoc -notree -noindex -nohelp -nonavbar -notimestamp -private -d /tmp/foo -quiet -taglet net.cscott.jdoctest.JDoctest -tagletpath jdoctest-1.4.jar:lib/rhino1_7R2-RC3/js.jar:bin -J-ea -classpath bin:/home/cananian/jdk1.6.0_11/lib/tools.jar:lib/rhino1_7R2-RC3/js.jar:lib/junit-4.6.jar src/net/cscott/jdoctest/JDoctest.java
  */
-public class JUnitTestBridge2 {
+public class JavadocJUnitTestBridge {
     public final Class<?> klass;
     public final File sourceFile;
-    public JUnitTestBridge2(Class<?> klass, File sourceFile) {
+    public JavadocJUnitTestBridge(Class<?> klass, File sourceFile) {
         this.klass = klass;
         this.sourceFile = sourceFile;
     }
     /* stand-alone! */
     public static void main(String[] args) throws IOException {
         for (String a : args)
-            new JUnitTestBridge2(JUnitTestBridge2.class, new File(a)).runDoctest();
+            new JavadocJUnitTestBridge(JavadocJUnitTestBridge.class, new File(a)).runDoctest();
     }
 
     @Test
@@ -64,7 +64,7 @@ public class JUnitTestBridge2 {
         // provide annotation or some way to add additional arguments
         // or class path entries? (maybe for taglet path?)
         int status = com.sun.tools.javadoc.Main.execute(
-                JUnitTestBridge2.class.getSimpleName(),
+                JavadocJUnitTestBridge.class.getSimpleName(),
                 errWriter, warnWriter, noticeWriter,
                 com.sun.tools.doclets.standard.Standard.class.getName(),
                 args);
@@ -85,6 +85,8 @@ public class JUnitTestBridge2 {
         Pattern.compile("^.*[.]java:(\\d+):",
                         Pattern.MULTILINE|Pattern.CASE_INSENSITIVE);
     private static class DoctestFailure extends Error {
+        private static final long serialVersionUID = -7687329363469162375L;
+
         DoctestFailure(String msg, Class<?> klass,
                        File sourceFile, int lineNum) {
             super(msg);

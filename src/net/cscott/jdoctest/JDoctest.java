@@ -73,7 +73,7 @@ import com.sun.tools.doclets.Taglet;
  *   js> new java.lang.Object()
  *   java.lang.Object@1ac2f9c
  */
-@RunWith(value=JDoctestRunner2.class)
+@RunWith(value=JDoctestRunner.class)
 public class JDoctest implements Taglet {
     private DocErrorReporter docErrorReporter = null;
     private static boolean versionPrinted = false;
@@ -145,6 +145,7 @@ public class JDoctest implements Taglet {
      *  js> m.get("doc.test")
      *  net.cscott.jdoctest.JDoctest@de1b8a
      */
+    @SuppressWarnings("unchecked")
     public static void register(Map tagletMap) {
        JDoctest taglet = new JDoctest();
        // this is an evil hack: try to fetch the rootDoc from the

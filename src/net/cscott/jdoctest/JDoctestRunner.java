@@ -3,7 +3,6 @@ package net.cscott.jdoctest;
 import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -23,8 +22,8 @@ import org.junit.runners.model.Statement;
 /**
  * The <code>JDoctestRunner</code> runs doctests generated from a single given
  * class.  Just annotate the class {@code @RunWith(value=JDoctestRunner.class)}.
- * Add a {@code @DoctestRoot(value="foo/bar")} if you are putting the
- * doctest-processed output someplace other than "api/tests".
+ * Add a {@code @SrcRoot(value="foo/bar")} if the source files for your class
+ * lives someplace other than "src".
  */
 public class JDoctestRunner extends Suite {
 	/**
@@ -33,7 +32,7 @@ public class JDoctestRunner extends Suite {
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.TYPE)
-	public static @interface DoctestRoot {
+	public static @interface SrcRoot {
 	    public String value();
 	}
 
@@ -42,14 +41,14 @@ public class JDoctestRunner extends Suite {
 	        private final Class<?> parentType;
 	        private final File testFile;
 		JDoctestRunnerForFile(Class<?> type, File testFile) throws InitializationError {
-			super(JUnitTestBridge.class);
+			super(JavadocJUnitTestBridge.class);
 			this.parentType = type;
 			this.testFile = testFile;
 		}
 
 		@Override
 		public Object createTest() throws Exception {
-		    return new JUnitTestBridge(testFile);
+		    return new JavadocJUnitTestBridge(parentType, testFile);
 		}
 
 		@Override
@@ -78,22 +77,21 @@ public class JDoctestRunner extends Suite {
 	/**
 	 * Only called reflectively. Do not use programmatically.
 	 */
-	public JDoctestRunner(final Class<?> klass) throws Throwable {
+	public JDoctestRunner(Class<?> klass) throws Throwable {
 		super(klass, Collections.<Runner>emptyList());
-		String doctestRoot = getDoctestRoot(klass);
-		String dir = klass.getPackage().getName();
-		File testDir = new File(doctestRoot, dir);
-		if (!testDir.isDirectory())
-		    fail("No tests found in "+testDir);
-		FilenameFilter filter = new FilenameFilter() {
-	            public boolean accept(File dir, String name) {
-	                return name.startsWith("test-"+klass.getSimpleName()+"-");
-	            }};
-		for (File f: testDir.listFiles(filter)) {
-		    runners.add(new JDoctestRunnerForFile(klass, f));
-		}
-		if (runners.isEmpty())
-		    fail("No tests found for "+klass.getSimpleName()+" in "+testDir);
+		String srcRoot = getSrcRoot(klass);
+		// not find filename of source file for this class
+		Class<?> base = klass;
+                while (base.getEnclosingClass() != null)
+                    base = base.getEnclosingClass();
+		String pkg = base.getPackage().getName();
+		File srcPath = new File(srcRoot);
+		for (String d : pkg.split("[.]"))
+		    srcPath = new File(srcPath, d);
+		srcPath = new File(srcPath, base.getSimpleName()+".java");
+		if (!srcPath.isFile())
+		    fail("Can't find source for "+klass+" at "+srcPath);
+		runners.add(new JDoctestRunnerForFile(klass, srcPath));
 	}
 
 	@Override
@@ -101,11 +99,11 @@ public class JDoctestRunner extends Suite {
 		return runners;
 	}
 
-        private static String getDoctestRoot(Class<?> klass) throws InitializationError {
-            DoctestRoot annotation= klass.getAnnotation(DoctestRoot.class);
+        private static String getSrcRoot(Class<?> klass) throws InitializationError {
+            SrcRoot annotation= klass.getAnnotation(SrcRoot.class);
             if (annotation == null)
                 // default value
-                return "api/tests";
+                return "src";
             return annotation.value();
         }
 }

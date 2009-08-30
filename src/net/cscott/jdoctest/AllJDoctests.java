@@ -22,7 +22,7 @@ import org.junit.runners.Parameterized.Parameters;
  * @author C. Scott Ananian
  */
 @RunWith(value = Parameterized.class)
-public class AllJDoctests extends JUnitTestBridge {
+public class AllJDoctests extends JsJUnitTestBridge {
     public AllJDoctests(String testFile) {
         super(new File(testFile));
     }

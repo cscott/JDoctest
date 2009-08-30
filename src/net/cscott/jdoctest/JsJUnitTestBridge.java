@@ -15,13 +15,13 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.tools.shell.Global;
 
 /** Basic JUnit test: run the doc tests in the specific javascript file. */
-public class JUnitTestBridge {
+public class JsJUnitTestBridge {
     public final File testFile;
-    public JUnitTestBridge(File testFile) { this.testFile = testFile; }
+    public JsJUnitTestBridge(File testFile) { this.testFile = testFile; }
     /* stand-alone! */
     public static void main(String[] args) {
         for (String a : args)
-            new JUnitTestBridge(new File(a)).runDoctest();
+            new JsJUnitTestBridge(new File(a)).runDoctest();
     }
 
     @Test
