@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.runner.RunWith;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.tools.shell.Global;
@@ -72,6 +73,7 @@ import com.sun.tools.doclets.Taglet;
  *   js> new java.lang.Object()
  *   java.lang.Object@1ac2f9c
  */
+@RunWith(value=JDoctestRunner2.class)
 public class JDoctest implements Taglet {
     private DocErrorReporter docErrorReporter = null;
     private static boolean versionPrinted = false;
