@@ -158,8 +158,7 @@ public class JDoctest implements Taglet {
 	   /* ignore: we'll do the compatible thing and just emit
 	    * errors to stderr */
        }
-       Taglet t = (Taglet) tagletMap.get(taglet.getName());
-       if (t != null) {
+       if (tagletMap.containsKey(taglet.getName())) {
            tagletMap.remove(taglet.getName());
        }
        tagletMap.put(taglet.getName(), taglet);
