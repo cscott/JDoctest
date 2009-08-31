@@ -14,7 +14,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.tools.shell.Global;
 
-/** Basic JUnit test: run the doc tests in the specific javascript file. */
+/** JUnit test bridge to re-run the doc tests in the specific javascript file. */
 public class JsJUnitTestBridge {
     public final File testFile;
     public JsJUnitTestBridge(File testFile) { this.testFile = testFile; }

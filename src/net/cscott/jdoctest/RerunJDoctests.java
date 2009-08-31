@@ -10,7 +10,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 /**
- * This is a JUnit test which runs all of the doctests emitted by JDoctest.
+ * This is a JUnit test which re-runs all of the doctests emitted by JDoctest.
  * Set the {@code net.cscott.jdoctest.output} property when you emit your
  * javadoc, and stand-alone versions of your tests will be emitted into the
  * specified directory.  Subclass this test class and (if your tests are not
@@ -22,8 +22,8 @@ import org.junit.runners.Parameterized.Parameters;
  * @author C. Scott Ananian
  */
 @RunWith(value = Parameterized.class)
-public class AllJDoctests extends JsJUnitTestBridge {
-    public AllJDoctests(String testFile) {
+public class RerunJDoctests extends JsJUnitTestBridge {
+    public RerunJDoctests(String testFile) {
         super(new File(testFile));
     }
 

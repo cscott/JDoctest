@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
  */
 class Patterns {
     /** Export the EXPECT FAIL processing so it can be used by
-     *  {@link AllJDoctests}.
+     *  {@link RerunJDoctests}.
      */
     public static boolean expectFail(String test_text) {
         return P_expect_fail.matcher(test_text).find();

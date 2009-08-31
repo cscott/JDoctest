@@ -23,9 +23,10 @@ import org.junit.runners.model.Statement;
  * The <code>JDoctestRunner</code> runs doctests generated from a single given
  * class.  Just annotate the class {@code @RunWith(value=JDoctestRunner.class)}.
  * Add a {@code @SrcRoot(value="foo/bar")} if the source files for your class
- * lives someplace other than "src".
+ * live someplace other than "src".
  */
 public class JDoctestRunner extends Suite {
+        private final String name;
 	/**
 	 * Annotation for a method which provides parameters to be injected into the
 	 * test class constructor by <code>Parameterized</code>
@@ -78,7 +79,8 @@ public class JDoctestRunner extends Suite {
 	 * Only called reflectively. Do not use programmatically.
 	 */
 	public JDoctestRunner(Class<?> klass) throws Throwable {
-		super(klass, Collections.<Runner>emptyList());
+		super(null, Collections.<Runner>emptyList());
+		this.name = klass.getName();
 		String srcRoot = getSrcRoot(klass);
 		// not find filename of source file for this class
 		Class<?> base = klass;
@@ -92,6 +94,10 @@ public class JDoctestRunner extends Suite {
 		if (!srcPath.isFile())
 		    fail("Can't find source for "+klass+" at "+srcPath);
 		runners.add(new JDoctestRunnerForFile(klass, srcPath));
+	}
+	@Override
+	protected String getName() {
+	        return this.name;
 	}
 
 	@Override

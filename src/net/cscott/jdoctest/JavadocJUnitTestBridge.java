@@ -9,7 +9,8 @@ import java.util.regex.Pattern;
 
 import org.junit.Test;
 
-/** Basic JUnit test: run the doc tests from the specified java source file. */
+/** JUnit test bridge to generate and run the doc tests from a specific
+ *  Java source file. */
 /* basic command to make things go:
  * javadoc -notree -noindex -nohelp -nonavbar -notimestamp -private -d /tmp/foo -quiet -taglet net.cscott.jdoctest.JDoctest -tagletpath jdoctest-1.4.jar:lib/rhino1_7R2-RC3/js.jar:bin -J-ea -classpath bin:/home/cananian/jdk1.6.0_11/lib/tools.jar:lib/rhino1_7R2-RC3/js.jar:lib/junit-4.6.jar src/net/cscott/jdoctest/JDoctest.java
  */
@@ -20,7 +21,7 @@ public class JavadocJUnitTestBridge {
         this.klass = klass;
         this.sourceFile = sourceFile;
     }
-    /* stand-alone! */
+    /* stand-alone! (for testing) */
     public static void main(String[] args) throws IOException {
         for (String a : args)
             new JavadocJUnitTestBridge(JavadocJUnitTestBridge.class, new File(a)).runDoctest();
@@ -82,7 +83,7 @@ public class JavadocJUnitTestBridge {
         }
     }
     private static final Pattern errorLine =
-        Pattern.compile("^.*[.]java:(\\d+):",
+        Pattern.compile("^.*[.]java:(\\d+): err",
                         Pattern.MULTILINE|Pattern.CASE_INSENSITIVE);
     private static class DoctestFailure extends Error {
         private static final long serialVersionUID = -7687329363469162375L;

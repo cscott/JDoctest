@@ -133,6 +133,36 @@ window['JAVADOC_BASE'] = '{@docRoot}';
 	</javadoc>
     </target>
 
+    <!-- run all tests -->
+    <target name="test" depends="compile"
+	    description="Runs all doctests.">
+      <!-- fork="yes" is necessary, or else the embedded javadoc
+           doesn't get the correct classpath -->
+      <junit printsummary="yes" fork="yes" forkmode="once" haltonfailure="yes">
+	<formatter type="plain"/>
+	<test name="net.cscott.jdoctest.JDoctest" />
+	<classpath refid="classpath.path" />
+	<assertions>
+	  <enable package="net.cscott"/>
+	</assertions>
+      </junit>
+    </target>
+
+    <!-- re-run tests from the last javadoc invocation.  This is a bit
+         faster than the 'test' target, if you know your tests haven't
+         changed. -->
+    <target name="retest" depends="compile"
+	    description="Re-runs tests from the api/tests directory">
+      <junit>
+	<formatter type="plain"/>
+	<test name="net.cscott.jdoctest.RerunJDoctests" />
+	<classpath refid="classpath.path" />
+	<assertions>
+	  <enable package="net.cscott"/>
+	</assertions>
+      </junit>
+    </target>
+
     <!-- export the project as a jar -->
     <target name="jar" depends="compile"
             description="Exports the project as a jar">
