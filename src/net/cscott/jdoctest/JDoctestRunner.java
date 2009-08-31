@@ -105,11 +105,16 @@ public class JDoctestRunner extends Suite {
 		return runners;
 	}
 
-        private static String getSrcRoot(Class<?> klass) throws InitializationError {
+        private String getSrcRoot(Class<?> klass) throws InitializationError {
             SrcRoot annotation= klass.getAnnotation(SrcRoot.class);
             if (annotation == null)
                 // default value
-                return "src";
+                return defaultSrcRoot();
             return annotation.value();
         }
+
+	/** Override this method to change the default path to your sources. */
+	protected String defaultSrcRoot() {
+		return "src";
+	}
 }

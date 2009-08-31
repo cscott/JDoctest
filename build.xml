@@ -19,8 +19,7 @@ JDoctest build file.
       <property name="classes_dir"	value="${basedir}/bin"/>
       <!-- set the classpath -->
       <fileset id="jar.set" dir="lib">
-	<!-- use js.jar if you've got a 1.5 or greater jdk -->
-        <include name="rhino*/js-14.jar" />
+        <include name="rhino*/js.jar" />
       </fileset>
       <path id="classpath.path">
         <pathelement path="${classes_dir}"/>
@@ -118,7 +117,7 @@ JDoctest build file.
                  author="true" use="true" version="true"
 		 breakiterator="true">
 	  <taglet name="net.cscott.jdoctest.JDoctest"
-		  path="${package}-${version}.jar:lib/rhino1_7R2-RC3/js-14.jar"/>
+		  path="${package}-${version}.jar:lib/rhino1_7R2-RC3/js.jar"/>
 	  <arg value="-J-Dnet.cscott.jdoctest.output=api/tests" />
 	  <arg value="-J-ea:net.cscott..." />
 	  <classpath refid="classpath.path" />
