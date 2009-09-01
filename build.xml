@@ -41,6 +41,10 @@ JDoctest build file.
 	<delete dir="${api_dir}" />
 	<delete file="${basedir}/${package}-${version}.jar" />
         <delete file="src/${package_topdir}/Version.java" />
+	<!-- test output -->
+	<delete>
+	  <fileset dir="${basedir}" includes="TEST-*.txt" />
+	</delete>
     </target>
 
     <!-- make the version file -->
