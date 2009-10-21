@@ -226,7 +226,7 @@ public class JDoctest implements Taglet {
 	String fail = null;
 	// Create Javascript context.
 	String prologue = (packageName == null) ? null :
-	    ("importPackage("+packageName+");");
+	    ("importPackage(Packages."+packageName+");");
 	Context cx = Context.enter();
 	try {
 	    Global global = new Global(); // this is also a scope.
