@@ -49,6 +49,7 @@ public class JsJUnitTestBridge {
         // Run each one in turn.
         Context cx = Context.enter();
         try {
+            cx.setLanguageVersion(Context.VERSION_1_7); // js 1.7 by default
             boolean expect_fail = Patterns.expectFail(testText);
             Global global = new Global(); // this is also a scope.
             global.init(cx);

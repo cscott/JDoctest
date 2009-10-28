@@ -229,6 +229,7 @@ public class JDoctest implements Taglet {
 	    ("importPackage(Packages."+packageName+");");
 	Context cx = Context.enter();
 	try {
+	    cx.setLanguageVersion(Context.VERSION_1_7); // js 1.7 by default
 	    Global global = new Global(); // this is also a scope.
 	    global.init(cx);
 	    // import the package.
