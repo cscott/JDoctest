@@ -11,6 +11,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -150,13 +152,38 @@ public class JDoctest implements Taglet {
        JDoctest taglet = new JDoctest();
        // this is an evil hack: try to fetch the rootDoc from the
        // standard HTML doclet, in order to get a DocErrorReporter
-       try {
-	   taglet.docErrorReporter =
-	       com.sun.tools.doclets.standard.Standard.htmlDoclet
-	       .configuration().root;
-       } catch (Throwable t) {
-	   /* ignore: we'll do the compatible thing and just emit
-	    * errors to stderr */
+       if (taglet.docErrorReporter == null)
+           try {
+               // JDK 1.7ish
+               //taglet.docErrorReporter =
+               //    com.sun.tools.doclets.formats.html.ConfigurationImpl
+               //    .getInstance().root;
+               Class<?> c = Class.forName
+                   ("com.sun.tools.doclets.formats.html.ConfigurationImpl");
+               Method m = c.getMethod("getInstance");
+               Object config = m.invoke(null);
+               Field f = config.getClass().getField("root");
+               taglet.docErrorReporter = (DocErrorReporter)
+                   f.get(config);
+           } catch (Throwable t) { /* ignore */ }
+       if (taglet.docErrorReporter == null)
+           try {
+               // JDK 1.4ish
+               //taglet.docErrorReporter =
+               //    com.sun.tools.doclets.standard.Standard.htmlDoclet
+               //    .configuration().root;
+               Class<?> c = Class.forName
+                   ("com.sun.tools.doclets.standard.Standard.htmlDoclet");
+               Method m = c.getMethod("configuration");
+               Object config = m.invoke(null);
+               Field f = config.getClass().getField("root");
+               taglet.docErrorReporter = (DocErrorReporter)
+                   f.get(config);
+           } catch (Throwable t) { /* ignore */ }
+       if (taglet.docErrorReporter == null) {
+           // if taglet.docErrorReporter is still null, we'll do the compatible
+           // thing and just emit errors to stderr
+           //System.err.println("WARNING: No error reporter!");
        }
        if (tagletMap.containsKey(taglet.getName())) {
            tagletMap.remove(taglet.getName());
@@ -246,6 +273,7 @@ public class JDoctest implements Taglet {
 		    docErrorReporter.printError(sp, fail);
 		else {
 		    System.err.println("DOCTEST UNEXPECTED PASS at "+sp);
+		    System.exit(2);
 		}
 	    } else {
 		testsExpectedPass += testsRun;
@@ -279,6 +307,7 @@ public class JDoctest implements Taglet {
 		else {
 		    System.err.println("DOCTEST UNEXPECTED FAIL at "+sp);
 		    System.err.println(fail);
+		    System.exit(1);
 		}
 	    }
 	}
@@ -302,6 +331,7 @@ public class JDoctest implements Taglet {
 		    docErrorReporter.printError(sp, "Couldn't write to "+outf);
 		else
 		    System.err.println("ERROR: Couldn't write to "+outf);
+		    System.exit(3);
 	    }
 	}
 	// typeset the text.
