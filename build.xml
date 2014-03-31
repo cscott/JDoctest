@@ -26,6 +26,8 @@ JDoctest build file.
 	<fileset refid="jar.set" />
         <pathelement path="lib/junit-4.6.jar"/>
 	<pathelement path="${jdk.home}/lib/tools.jar"/>
+        <!-- this version is more portable -->
+	<pathelement path="${java.home}/../lib/tools.jar"/>
       </path>
     </target>
 
