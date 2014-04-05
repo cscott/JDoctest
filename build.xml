@@ -119,7 +119,7 @@ JDoctest build file.
                  author="true" use="true" version="true"
 		 breakiterator="true" failonerror="true">
 	  <taglet name="net.cscott.jdoctest.JDoctest"
-		  path="${package}-${version}.jar:lib/rhino1_7R2-RC3/js.jar"/>
+		  path="${package}-${version}.jar:lib/rhino1_7R5pre/js.jar"/>
 	  <arg value="-J-Dnet.cscott.jdoctest.output=api/tests" />
 	  <arg value="-J-ea:net.cscott..." />
 	  <classpath refid="classpath.path" />

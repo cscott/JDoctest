@@ -12,7 +12,7 @@ import org.junit.Test;
 /** JUnit test bridge to generate and run the doc tests from a specific
  *  Java source file. */
 /* basic command to make things go:
- * javadoc -notree -noindex -nohelp -nonavbar -notimestamp -private -d /tmp/foo -quiet -taglet net.cscott.jdoctest.JDoctest -tagletpath jdoctest-1.4.jar:lib/rhino1_7R2-RC3/js.jar:bin -J-ea -classpath bin:/home/cananian/jdk1.6.0_11/lib/tools.jar:lib/rhino1_7R2-RC3/js.jar:lib/junit-4.6.jar src/net/cscott/jdoctest/JDoctest.java
+ * javadoc -notree -noindex -nohelp -nonavbar -notimestamp -private -d /tmp/foo -quiet -taglet net.cscott.jdoctest.JDoctest -tagletpath jdoctest-1.4.jar:lib/rhino1_7R5pre/js.jar:bin -J-ea -classpath bin:/home/cananian/jdk1.6.0_11/lib/tools.jar:lib/rhino1_7R5pre/js.jar:lib/junit-4.6.jar src/net/cscott/jdoctest/JDoctest.java
  */
 public class JavadocJUnitTestBridge {
     public final Class<?> klass;
