@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 
 import org.junit.runner.RunWith;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.tools.shell.Global;
 
@@ -74,11 +75,18 @@ import com.sun.tools.doclets.Taglet;
  *   java.lang.Object@1d2068d
  *   js> new java.lang.Object()
  *   java.lang.Object@1ac2f9c
+ * @doc.test
+ *   We can even access private members!
+ *   js> JDoctest.versionPrinted
+ *   true
  */
 @RunWith(value=JDoctestRunner.class)
 public class JDoctest implements Taglet {
     private DocErrorReporter docErrorReporter = null;
     private static boolean versionPrinted = false;
+    // JavaScript context factory
+    private ContextFactory contextFactory = new JDoctestContextFactory();
+
     /**
      * Return the name of this custom tag.
      * @doc.test
@@ -254,11 +262,9 @@ public class JDoctest implements Taglet {
 	// Create Javascript context.
 	String prologue = (packageName == null) ? null :
 	    ("importPackage(Packages."+packageName+");");
-	Context cx = Context.enter();
+	Context cx = contextFactory.enterContext();
 	try {
-	    cx.setLanguageVersion(Context.VERSION_1_7); // js 1.7 by default
-	    Global global = new Global(); // this is also a scope.
-	    global.init(cx);
+	    Global global = new Global(cx); // this is also a scope.
 	    // import the package.
 	    if (prologue!=null)
 		cx.evaluateString(global, prologue, "<init>", 1, null);
@@ -379,5 +385,26 @@ public class JDoctest implements Taglet {
 	m.appendTail(sb);
 	return sb.toString();
     }
-}
 
+    /** JavaScript context with privileged access to Java. */
+    static class JDoctestContextFactory extends ContextFactory {
+	protected Context makeContext() {
+	    return new Context(this) {
+		// JavaScript 1.8 by default
+		{ setLanguageVersion(Context.VERSION_1_8); }
+	    };
+
+	}
+	// enable privileged access to Java
+	public boolean hasFeature(Context cx, int featureIndex) {
+	    switch (featureIndex) {
+	    case Context.FEATURE_ENHANCED_JAVA_ACCESS:
+	    case Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER:
+	    case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
+		return true;
+	    default:
+		return super.hasFeature(cx, featureIndex);
+	    }
+	}
+    }
+}
