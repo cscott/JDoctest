@@ -336,10 +336,10 @@ public class JDoctest implements Taglet {
 	    } else {
 		testsUnexpectedFail += 1;
 		if (docErrorReporter!=null)
-		    docErrorReporter.printError(sp, fail);
+		    docErrorReporter.printError(sp, html_unescape(fail));
 		else {
 		    System.err.println("DOCTEST UNEXPECTED FAIL at "+sp);
-		    System.err.println(fail);
+		    System.err.println(html_unescape(fail));
 		    System.exit(1);
 		}
 	    }
@@ -411,6 +411,30 @@ public class JDoctest implements Taglet {
 	    m.appendReplacement(sb, html_escape_char(m.group()));
 	m.appendTail(sb);
 	return sb.toString();
+    }
+    private static final Pattern P_unhtml =
+        Pattern.compile("&\\w+;|</?(ins|del)>");
+    // change <del>...</del> to [-...-] and <ins>...</ins> to {+...+}
+    // as well as replacing &...; sequences
+    private static String html_unescape_group(String s) {
+        s = s.intern();
+        if (s == "<del>")  return "[-";
+        if (s == "</del>") return "-]";
+        if (s == "<ins>")  return "{+";
+        if (s == "</ins>") return "+}";
+        if (s == "&lt;")   return "<";
+        if (s == "&gt;")   return ">";
+        if (s == "&amp;")  return "&";
+        if (s == "&quot;") return "\"";
+        assert false; return s;
+    }
+    private static String html_unescape(String s) {
+        Matcher m = P_unhtml.matcher(s);
+        StringBuffer sb = new StringBuffer();
+        while (m.find())
+            m.appendReplacement(sb, html_unescape_group(m.group()));
+        m.appendTail(sb);
+        return sb.toString();
     }
 
     /** JavaScript context with privileged access to Java. */
