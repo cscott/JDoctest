@@ -18,7 +18,9 @@ pre.prettyprint { padding: 2px; border: 1px solid #888; }
 .doctest-info { /* test description */ }
 .doctest-output { color: #303030; }
 .doctest-fail { padding: 2px; border: 2px solid #f00;
-                background: #fdd !important; color: #200 !important; }
+                background: #fff8f8 !important; color: #200 !important; }
+.doctest-fail ins { background: #e6ffe6; }
+.doctest-fail del { background: #ffe6e6; }
 
 @media print {
   .str { color: #060; }
@@ -34,6 +36,8 @@ pre.prettyprint { padding: 2px; border: 1px solid #888; }
 
   .doctest-prompt { color: #440; font-weight: normal; }
   .doctest-output { color: #000; font-style: italic; }
-  .doctest-fail { color: #000 !important; background: #fff !important;
-                  border: 5px solid red; }
+  .doctest-fail { color: #000 !important; border: 5px solid red; }
+  .doctest-fail, .doctest-fail ins, .doctest-fail del {
+    background: #fff !important;
+  }
 }

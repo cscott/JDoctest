@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 
 import org.junit.runner.RunWith;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.tools.shell.Global;
@@ -247,6 +248,8 @@ public class JDoctest implements Taglet {
 	Pattern.compile("\\n[ \\t]*");
     private static final Pattern P_test_descr =
 	Pattern.compile("(?sm)\\A(.*?)(^js&gt;)");
+    private static final Pattern P_test_results =
+	Pattern.compile("doctest failure running:\n(.*?)\n?expected: (.*?)\n?actual: (.*)\n(?: \\((.*#\\d+)\\))?", Pattern.DOTALL);
     private void doOne(String packageName, SourcePosition sp, int tagNum,
 		       String test_text, StringBuilder sb) {
 	// strip consistent indentation from all lines (based on first line)
@@ -298,7 +301,31 @@ public class JDoctest implements Taglet {
 	}
 	if (fail != null) {
 	    // hack layout a bit
-	    fail = fail.replaceAll("(?m)^(expected|actual): ", "$0\n");
+	    Matcher failmsg = P_test_results.matcher(fail);
+	    if (failmsg.matches()) {
+		final String testname = failmsg.group(1);
+		final String expected = failmsg.group(2);
+		final String actual = failmsg.group(3);
+		final String srcloc = failmsg.group(4);
+		// run Diff!
+		final String diff = (String)
+		    contextFactory.call(new ContextAction() {
+			    @Override
+			    public String run(Context cx) {
+				return (new JsDiffImpl()).
+				    diffString(expected, actual);
+			    }
+			});
+		fail = "Doctest failure:\n"+
+		    html_escape(testname) + "\n"+
+		    "Expected:\n" + html_escape(expected)+"\n"+
+		    "Actual:\n" + html_escape(actual)+"\n"+
+		    "Diff:\n" + diff +"\n";
+		if (srcloc!=null) { fail+='('+html_escape(srcloc)+')'; }
+	    } else {
+		fail = fail.replaceAll("(?m)^(expected|actual): ", "$0\n");
+		fail = html_escape(fail);
+	    }
 	    if (expect_fail) {
 		testsExpectedFail += 1;
 		if (docErrorReporter!=null)
@@ -361,7 +388,7 @@ public class JDoctest implements Taglet {
 	sb.append("</pre>\n");
 	if (fail!=null) {
 	    sb.append("<pre class=\"doctest-fail\" style=\"background:red;color:white;font-weight:bold;\">");
-	    sb.append(html_escape(fail));
+	    sb.append(fail); // already html-escaped
 	    sb.append("</pre>\n");
 	}
     }

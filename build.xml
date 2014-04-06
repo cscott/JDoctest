@@ -90,6 +90,22 @@ JDoctest build file.
 	    <mkdir dir="${classes_dir}" />
 	    <javac srcdir="${src_dir}"
 		   destdir="${classes_dir}"
+                   includes="net/cscott/jdoctest/JsDiff.java"
+		   deprecation="on" source="1.5" target="1.5" debug="true">
+		   <classpath refid="classpath.path" />
+	    </javac>
+            <!-- compile javascript diff helper -->
+            <java classname="org.mozilla.javascript.tools.jsc.Main"
+                  failonerror="true">
+              <classpath refid="classpath.path" />
+              <arg value="-package" /><arg value="net.cscott.jdoctest" />
+              <arg value="-d" /><arg value="${classes_dir}" />
+              <arg value="-version" /><arg value="180" />
+              <arg value="-implements" /><arg value="net.cscott.jdoctest.JsDiff" />
+              <arg value="src/net/cscott/jdoctest/JsDiffImpl.js" />
+            </java>
+	    <javac srcdir="${src_dir}"
+		   destdir="${classes_dir}"
 		   excludes=".git"
 		   deprecation="on" source="1.5" target="1.5" debug="true">
 		   <classpath refid="classpath.path" />
