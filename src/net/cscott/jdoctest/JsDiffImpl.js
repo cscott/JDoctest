@@ -66,6 +66,9 @@ function diffString( o, n ) {
   }
   // compress adjacent <ins> and <del> regions.
   str = str.replace(/<\/ins><ins>|<\/del><del>/g, '');
+  // move \n out of adjacent <ins>/<del>
+  str = str.replace(/(<del>[^<]*)(\s*\n\s*)(<\/del><ins>[^<]*)\2(<\/ins>)/g,
+                    '$1$3$4$2');
   
   return str;
 }
