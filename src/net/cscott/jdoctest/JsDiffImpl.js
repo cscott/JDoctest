@@ -64,6 +64,8 @@ function diffString( o, n ) {
       }
     }
   }
+  // compress adjacent <ins> and <del> regions.
+  str = str.replace(/<\/ins><ins>|<\/del><del>/g, '');
   
   return str;
 }
