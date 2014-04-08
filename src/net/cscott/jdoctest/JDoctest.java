@@ -13,9 +13,12 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import name.fraser.neil.plaintext.diff_match_patch;
 
 import org.junit.runner.RunWith;
 import org.mozilla.javascript.Context;
@@ -308,14 +311,7 @@ public class JDoctest implements Taglet {
 		final String actual = failmsg.group(3);
 		final String srcloc = failmsg.group(4);
 		// run Diff!
-		final String diff = (String)
-		    contextFactory.call(new ContextAction() {
-			    @Override
-			    public String run(Context cx) {
-				return (new JsDiffImpl()).
-				    diffString(expected, actual);
-			    }
-			});
+		final String diff = diffString(expected, actual);
 		fail = "Doctest failure:\n"+
 		    html_escape(testname) + "\n"+
 		    "Expected:\n" + html_escape(expected)+"\n"+
@@ -391,6 +387,35 @@ public class JDoctest implements Taglet {
 	    sb.append(fail); // already html-escaped
 	    sb.append("</pre>\n");
 	}
+    }
+
+    private static final diff_match_patch differ = new diff_match_patch() {{
+        Diff_Timeout = 0;
+    }};
+    private static String diffString(String a, String b) {
+        // Use diff implementation from:
+        // http://code.google.com/p/google-diff-match-patch/
+        StringBuffer sb = new StringBuffer();
+        LinkedList<diff_match_patch.Diff> diffs = differ.diff_main(a, b, false);
+        differ.diff_cleanupSemantic(diffs);
+        for (diff_match_patch.Diff d : diffs) {
+            switch (d.operation) {
+            case EQUAL:
+                sb.append(html_escape(d.text));
+                break;
+            case DELETE:
+                sb.append("<del>");
+                sb.append(html_escape(d.text));
+                sb.append("</del>");
+                break;
+            case INSERT:
+                sb.append("<ins>");
+                sb.append(html_escape(d.text));
+                sb.append("</ins>");
+                break;
+            }
+        }
+        return sb.toString();
     }
 
     private static final Pattern P_html_special = Pattern.compile("[<>&\"]");
