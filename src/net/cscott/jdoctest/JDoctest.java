@@ -248,7 +248,7 @@ public class JDoctest implements Taglet {
     private int testsExpectedPass = 0, testsExpectedFail = 0;
     private int testsUnexpectedPass = 0, testsUnexpectedFail = 0;
     private static final Pattern P_initial_ws =
-	Pattern.compile("\\n[ \\t]*");
+	Pattern.compile("\\n[ \\t]*?(?=(js|  )>)");
     private static final Pattern P_test_descr =
 	Pattern.compile("(?sm)\\A(.*?)(^js&gt;)");
     private static final Pattern P_test_results =
