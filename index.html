@@ -7,7 +7,7 @@
   <title>JDoctest: an implementation of Python doctest for Java/Javadoc</title>
   <meta name="keywords"
         content="javadoc,doctest,java" />
-<base href="http://cscott.net/Projects/JDoctest/index.html" />
+<base href="https://cscott.net/Projects/JDoctest/index.html" />
 <link rel="icon" href="headshot.png" type="image/png">
 <link rel="shortcut icon" href="http://cscott.net/favicon.ico">
 <link rel="alternate" type="application/atom+xml" title="Commits to JDoctest" href="http://github.com/feeds/cscott/commits/JDoctest/master" >
@@ -23,20 +23,21 @@ Python doctests for Java/Javadoc</font></h1>
 
 <p>
 JDoctest is an implementation of Python's
-<a href="http://docs.python.org/lib/module-doctest.html">doctest</a> for Java,
+<a href="https://docs.python.org/3/library/doctest.html">doctest</a> for Java,
 based on the
 ideas in <a href="http://code.google.com/p/doctestj/">doctestj</a> and
 <a href="http://blog.norrisboyd.com/2008/03/doctest-in-rhino.html">Rhino's
 doctests</a>.</p>
 
-<p>Unlike doctestj, JDoctest is a javadoc <a href="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/taglet/overview.html">Taglet</a>, rather than a Doclet.
+<p>Unlike doctestj, JDoctest is a javadoc <a href="https://docs.oracle.com/en/java/javase/21/docs/api/jdk.javadoc/jdk/javadoc/doclet/Taglet.html">Taglet</a>, rather than a Doclet.
 It doesn't replace the standard javadoc, it just adds a new
 <code>@doc.test</code> tag.  We also use a multiline format similar to
 Python's doctest (based on <a
-href="http://www.mozilla.org/rhino">Rhino</a>'s implementation) rather
+href="https://github.com/mozilla/rhino">Rhino</a>'s implementation) rather
 than insist on a single evaluated expression, as doctestj does.</p>
 
-<p>Doctest blocks are written in Javascript.  <a
+<p>Doctest blocks are written in Javascript, using the most recent version
+of ECMAScript that Rhino supports.  <a
 href="https://developer.mozilla.org/en-US/docs/Rhino/Scripting_Java">Calling
 from Javascript into Java</a> is straightforward.  An example from the top
 of the <code>net.cscott.jdoctest.JDoctest</code> class:</p>
@@ -64,9 +65,9 @@ of the <code>net.cscott.jdoctest.JDoctest</code> class:</p>
  *   js&gt; try {
  *     &gt;   java.lang.String("hi").charAt(3);
  *     &gt; } catch (e) {
- *     &gt;   print(e.javaException.getMessage())
+ *     &gt;   print(e.javaException.getClass().getName())
  *     &gt; }
- *   String index out of range: 3
+ *   java.lang.StringIndexOutOfBoundsException
  * @doc.test
  *   This demonstrates that the current package has been imported:
  *   js&gt; JDoctest
@@ -87,36 +88,41 @@ of the <code>net.cscott.jdoctest.JDoctest</code> class:</p>
 public class JDoctest implements Taglet { ... }
 </pre>
 
-<p><a href="http://cscott.net/Projects/JDoctest/jdoctest-latest/api/net/cscott/jdoctest/JDoctest.html">View the generated javadoc for this example</a>.</p>
+<p><a href="https://cscott.net/Projects/JDoctest/jdoctest-latest/api/net/cscott/jdoctest/JDoctest.html">View the generated javadoc for this example</a>.</p>
 
 <h3>Downloading</h3>
-<p>JDoctest is currently at version 1.6.  You can 
+<p>JDoctest is currently at version 2.0, which requires JDK 17 or later.
+You can
 <a href="jdoctest-latest/">download the latest version</a>,
-see recent changes at
-<a href="https://www.ohloh.net/p/jdoctest/commits">ohloh</a> or
-<a href="http://github.com/cscott/JDoctest/commits/master">github</a>,
-<!--see <a href="jdoctest-latest/ChangeLog.txt">recent changes</a>,-->
+see <a href="https://github.com/cscott/JDoctest/blob/master/HISTORY.md">recent changes</a>,
 or browse the
-<a href="http://github.com/cscott/JDoctest">source code</a> or
+<a href="https://github.com/cscott/JDoctest">source code</a> or
 <a href="jdoctest-latest/api">API documentation</a> on-line.
-Jdoctest is licensed under the <a href="http://www.gnu.org">GNU</a>
-<a href="http://www.fsf.org/copyleft/gpl.html">GPL v2 or later</a>.
+Version 1.7 is the last release for older JDKs (1.5 through 12).
+Jdoctest is licensed under the <a href="https://www.gnu.org">GNU</a>
+<a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GPL v2 or later</a>.
 </p>
+
+<p>JDoctest is also on Maven Central, as
+<code>net.cscott:jdoctest:2.0</code> (for your tests) and
+<code>net.cscott:jdoctest-annotations:2.0</code> (just the
+<code>@Doctests</code> annotation, for your production code); see the
+<a href="jdoctest-latest/README.md">README file</a> for how to use them with
+Maven or Gradle.</p>
 
 <h3>Source code repository</h3>
 <p>The git repository for jdoctest can be cloned with the following command:</p>
 <!-- was: http://cscott.net/Projects/git/jdoctest -->
 <pre>
-git-clone <a href="https://github.com/cscott/JDoctest.git">https://github.com/cscott/JDoctest.git</a>
+git clone <a href="https://github.com/cscott/JDoctest.git">https://github.com/cscott/JDoctest.git</a>
 </pre>
 
 <h3>Building from source; installing</h3>
 
 <p>To build:</p>
 <ul>
- <li> Copy <code>sample.build.properties</code> to <code>build.properties</code> and edit it to
-   properly reflect that path to your JDK.  (We need to use the <code>tools.jar</code>
-   file from the JDK, so we need to know where to find it.)</li>
+ <li> You need JDK 17 or later.  (JDoctest 1.7 and earlier need a JDK
+   between 1.5 and 12, with its <code>tools.jar</code>.)</li>
  <li> Run <code>ant javadoc</code>, which will build the source code and then run its
    doctests.</li>
  <li> One failure is to be expected as the tests are run; it is included
@@ -126,25 +132,26 @@ git-clone <a href="https://github.com/cscott/JDoctest.git">https://github.com/cs
 <p>To install:</p>
 
 <ul>
- <li> Move the generated <code>jdoctest-*.jar</code> as well as <code>lib/rhino*/js.jar</code> to
-   a directory in your project.  If your project uses a pre-1.5 JDK,
-   use <code>lib/rhino*/js-14.jar</code> instead of <code>js.jar</code>.  Below, we will assume
+ <li> Move the generated <code>jdoctest-*.jar</code> as well as
+   <code>lib/rhino-all-*.jar</code> to
+   a directory in your project.  Below, we will assume
    that you've placed both these files in <code>lib/jdoctest</code> in your project.</li>
+ <li> Or, if your project uses Maven or Gradle, use the Maven Central
+   artifacts above.</li>
 </ul>
 
 <h3>Invocation</h3>
 <p>To invoke from the command line:</p>
 <pre>
 javadoc -taglet net.cscott.jdoctest.JDoctest \
-        -tagletpath lib/jdoctest/jdoctest.jar:lib/jdoctest/js.jar:bin \
+        -tagletpath lib/jdoctest/jdoctest.jar:lib/jdoctest/rhino-all-1.9.2.jar:bin \
         -J-ea \
         &lt;your other javadoc options go here&gt;
 </pre>
 <p>
 I'm assuming that your source code has been compiled into <code>bin</code>.  Note
   that your compiled class files must be included on the tagletpath so that
-  we can run the doctests.  Use <code>js-14.jar</code> instead of <code>js.jar</code> if your project
-  uses a pre-1.5 JDK.
+  we can run the doctests.
   Note that you need to use the <code>-J-ea</code> option if you
   want assertions to be enabled during the evaluation of the doctests.
   You can use <code>-J-ea:&lt;your package&gt;...</code> to only enable assertions in your
@@ -155,22 +162,23 @@ following rule will work:</p>
 <pre>
   &lt;javadoc failonerror="true" ...&gt;
     &lt;taglet name="net.cscott.jdoctest.JDoctest"
-            path="lib/jdoctest/jdoctest.jar:lib/jdoctest/js.jar:bin" /&gt;
+            path="lib/jdoctest/jdoctest.jar:lib/jdoctest/rhino-all-1.9.2.jar:bin" /&gt;
     &lt;arg value="-J-ea" /&gt;
   &lt;/javadoc&gt;
 </pre>
 
 <p>As before, replace <code>bin</code> with the appropriate path to your compiled
-  project classes, and use <code>js-14.jar</code> instead of <code>js.jar</code> if your project
-  uses a pre-1.5 JDK.   The <code>-J-ea</code> argument ensures assertions are
+  project classes.   The <code>-J-ea</code> argument ensures assertions are
   enabled in your code when doctests are evaluated.
+  If your doctests access private members of your classes, add
+  <code>-J--add-opens=java.base/java.lang=ALL-UNNAMED</code> as well.
 </p>
 
 <p>You may want to add css rules to make the output prettier.  JDoctest has
 hooks to allow the use of
 <a href="http://code.google.com/p/google-code-prettify/">google-code-prettify</a>
 which will do syntax highlighting on the client side.  The <code>build.xml</code> file for JDoctest shows how this is hooked up.  The files in
-<code>src/doc-test</code> should be copied to the top-level source directory of
+<code>src/doc-files</code> should be copied to the top-level source directory of
 your project.  Note that javadoc's directory structure for the generated
 documentation makes it tedious to link to the top-level doc-files directory
 from the generated documentation, but we add a <code>&lt;script&gt;</code> tag at the
@@ -178,7 +186,10 @@ bottom of each javadoc page (using the <code>-bottom</code> option) to make it a
 work out.
 </p>
 
-<p>JUnit support was added in JDoctest version 1.5; see the <a href="jdoctest-latest/README.md">README file</a> included with JDoctest for more details.</p>
+<p>JDoctest can also run your doctests as JUnit tests: annotate a class with
+<code>@Doctests</code>, and JDoctest's JUnit Platform test engine reports
+each of its doctests as a separate test.  JUnit support was added in
+JDoctest version 1.5, and moved to JUnit 6 in version 2.0; see the <a href="jdoctest-latest/README.md">README file</a> included with JDoctest for more details.</p>
 
 <h3>Mailing list</h3>
 
@@ -210,6 +221,8 @@ released.</p>
 <a href="http://cananian.livejournal.com/tag/jdoctest">LiveJournal</a>.</p>
 
 <h3>Version Archive</h3>
+<p><a href="jdoctest-2.0">Jdoctest 2.0</a>, released 28-Oct-2026.</p>
+<p><a href="jdoctest-1.7">Jdoctest 1.7</a>, released 28-Oct-2026.</p>
 <p><a href="jdoctest-1.6">Jdoctest 1.6</a>, released 31-Mar-2014.</p>
 <p><a href="jdoctest-1.5">Jdoctest 1.5</a>, released 12-Sep-2009.</p>
 <p><a href="jdoctest-1.4">Jdoctest 1.4</a>, released 09-Mar-2009.</p>
