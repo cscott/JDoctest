@@ -1,6 +1,6 @@
 package net.cscott.jdoctest;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,7 +9,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.List;
 
-import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.tools.shell.Global;
@@ -24,7 +23,6 @@ public class JsJUnitTestBridge {
             new JsJUnitTestBridge(new File(a)).runDoctest();
     }
 
-    @Test
     public void runDoctest() {
         runDoctest(this.testFile);
     }

@@ -14,12 +14,10 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
-import org.junit.Test;
-
 /** JUnit test bridge to generate and run the doc tests from a specific
  *  Java source file. */
 /* basic command to make things go:
- * javadoc -notree -noindex -nohelp -nonavbar -notimestamp -private -d /tmp/foo -quiet -Xdoclint:none -taglet net.cscott.jdoctest.JDoctest -tagletpath jdoctest-1.6.jar:lib/rhino1_7R5pre/js.jar:bin -J-ea -classpath bin:lib/rhino1_7R5pre/js.jar:lib/junit-4.6.jar src/net/cscott/jdoctest/JDoctest.java
+ * javadoc -notree -noindex -nohelp -nonavbar -notimestamp -private -d /tmp/foo -quiet -Xdoclint:none -taglet net.cscott.jdoctest.JDoctest -tagletpath jdoctest-2.0.jar:lib/rhino-all-1.9.2.jar:bin -J-ea -classpath bin:lib/rhino-all-1.9.2.jar:lib/junit-platform-console-standalone-6.1.3.jar src/net/cscott/jdoctest/JDoctest.java
  */
 public class JavadocJUnitTestBridge {
     public final Class<?> klass;
@@ -34,7 +32,6 @@ public class JavadocJUnitTestBridge {
             new JavadocJUnitTestBridge(JavadocJUnitTestBridge.class, new File(a)).runDoctest();
     }
 
-    @Test
     public void runDoctest() throws IOException {
         runDoctest(this.klass, this.sourceFile);
     }

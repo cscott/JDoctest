@@ -6,7 +6,7 @@ JDoctest build file.
 </description>
 <property name="package" value="jdoctest" />
 <property name="package_topdir" value="net/cscott/jdoctest" />
-<property name="version" value="1.7" /> <!-- change version # here! -->
+<property name="version" value="2.0" /> <!-- change version # here! -->
 
     <!-- define some variables for the script -->
     <target name="init">
@@ -24,8 +24,7 @@ JDoctest build file.
       <path id="classpath.path">
         <pathelement path="${classes_dir}"/>
 	<fileset refid="jar.set" />
-        <pathelement path="lib/junit-4.13.2.jar"/>
-        <pathelement path="lib/hamcrest-core-1.3.jar"/>
+        <pathelement path="lib/junit-platform-console-standalone-6.1.3.jar"/>
       </path>
     </target>
 
@@ -144,17 +143,19 @@ window['JAVADOC_BASE'] = '{@docRoot}';
     <!-- run all tests -->
     <target name="test" depends="compile"
 	    description="Runs all doctests.">
-      <!-- fork="yes" is necessary, or else the embedded javadoc
+      <!-- forking is necessary, or else the embedded javadoc
            doesn't get the correct classpath -->
-      <junit printsummary="yes" fork="yes" forkmode="once" haltonfailure="yes">
-	<formatter type="plain"/>
-	<test name="net.cscott.jdoctest.JDoctest" />
+      <junitlauncher printsummary="true" haltonfailure="true">
 	<classpath refid="classpath.path" />
-	<jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
-	<assertions>
-	  <enable package="net.cscott"/>
-	</assertions>
-      </junit>
+	<test name="net.cscott.jdoctest.JDoctestSelfTest"
+	      outputdir="${basedir}">
+	  <fork>
+	    <jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
+	    <jvmarg value="-ea:net.cscott..." />
+	  </fork>
+	  <listener type="legacy-plain" />
+	</test>
+      </junitlauncher>
     </target>
 
     <!-- re-run tests from the last javadoc invocation.  This is a bit
@@ -162,15 +163,17 @@ window['JAVADOC_BASE'] = '{@docRoot}';
          changed. -->
     <target name="retest" depends="compile"
 	    description="Re-runs tests from the api/tests directory">
-      <junit fork="yes" forkmode="once">
-	<formatter type="plain"/>
-	<test name="net.cscott.jdoctest.RerunJDoctests" />
+      <junitlauncher printsummary="true" haltonfailure="true">
 	<classpath refid="classpath.path" />
-	<jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
-	<assertions>
-	  <enable package="net.cscott"/>
-	</assertions>
-      </junit>
+	<test name="net.cscott.jdoctest.RerunJDoctests"
+	      outputdir="${basedir}">
+	  <fork>
+	    <jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
+	    <jvmarg value="-ea:net.cscott..." />
+	  </fork>
+	  <listener type="legacy-plain" />
+	</test>
+      </junitlauncher>
     </target>
 
     <!-- export the project as a jar -->
@@ -200,7 +203,7 @@ window['JAVADOC_BASE'] = '{@docRoot}';
         <tarfileset dir="lib" prefix="${package}-${version}/lib"
                     excludes="CVS" />
         <tarfileset dir="." prefix="${package}-${version}"
-         includes="README AUTHORS COPYING ChangeLog NEWS .gitignore
+         includes="README.md HISTORY.md COPYING .gitignore
                    build.xml ${package}-${version}.jar" />
       </tar>
     </target>

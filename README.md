@@ -11,7 +11,8 @@ tag.  We also use a multiline format similar to Python's doctest
 (based on Rhino's implementation) rather than insist on a single
 evaluated expression, as doctestj does.
 
-Doctest blocks are written in Javascript.  [Calling from Javascript into Java]
+Doctest blocks are written in Javascript, using the most recent version of
+ECMAScript that [Rhino] supports.  [Calling from Javascript into Java]
 is straightforward. An example from the top of the
 `net.cscott.jdoctest.JDoctest` class:
 
@@ -65,7 +66,8 @@ public class JDoctest implements Taglet { ... }
 To build:
  * You must have JDK 17 or greater.  JDoctest uses the `jdk.javadoc.doclet`
    taglet API; the old `com.sun.javadoc` API it used through version 1.7
-   was removed in JDK 13.
+   was removed in JDK 13.  If you are upgrading from JDoctest 1.x,
+   see [HISTORY.md] for changes which may affect your doctests.
  * Run `ant javadoc`, which will build the source code and then run its
    doctests.
  * One (ignored) failure is to be expected as the tests are run; it is
@@ -78,8 +80,9 @@ To install:
    a directory in your project.  Below, we will assume
    that you've placed both these files in `lib/jdoctest` in your project.
  * If you intend to use the JUnit test support, you wil also need
-   `lib/junit-4.13.2.jar` and `lib/hamcrest-core-1.3.jar` in your
-   classpath (see junit rules for ant below).
+   JUnit 6 (Jupiter) in your classpath; `lib/` contains
+   `junit-platform-console-standalone-6.1.3.jar`, which bundles
+   everything needed (see junit rules for ant below).
    The javadoc tool is found automatically; no `tools.jar` is needed.
 
 ## Command-line usage
@@ -147,62 +150,79 @@ source directory of your project.
 
 ## JUnit test support
 
-There are two ways to hook up doctests to JUnit.
+There are two ways to hook up doctests to [JUnit] 6.  Both provide
+[dynamic tests] which you return from a `@TestFactory` method.
 
 The simplest uses the
 `net.cscott.jdoctest.output` option described above: running
 `net.cscott.jdoctest.RerunJDoctests` as a JUnit test will rerun all
 emitted standalone tests.  It assumes these tests were emitted into
 `api/tests`; if you prefer them someplace else, subclass `RerunJDoctests`
-and reimplement the `listTests()` method to call `listTests(String dirName)`
-with the appropriate alternate directory name.
+and override its `testDir()` method to return the appropriate alternate
+directory name.  Alternatively, return
+`RerunJDoctests.doctests("your/dir/here")` from a `@TestFactory` method
+of your own.
 
 The following ant rule implements this option:
 ```xml
     <target name="retest" ...>
-      <junit>
-	<formatter type="plain"/>
-	<test name="net.cscott.jdoctest.RerunJDoctests" />
+      <junitlauncher printsummary="true" haltonfailure="true">
 	<classpath refid="classpath.path" />
-	<jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
-	<assertions>
-	  <enable/>
-	</assertions>
-      </junit>
+	<test name="net.cscott.jdoctest.RerunJDoctests">
+	  <fork>
+	    <jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
+	    <jvmarg value="-ea" />
+	  </fork>
+	  <listener type="legacy-plain" />
+	</test>
+      </junitlauncher>
     </target>
 ```
 
 A more elegant (but slower) mechanism invokes Javadoc on each of your
-source files to extract and execute the doctests.  Simply annotate each
-of your doctest-containing classes with the JUnit annotation:
+source files to extract and execute the doctests.  Write a test class
+which returns `JDoctestRunner.doctests()` for each of your
+doctest-containing classes:
 ```java
-    @RunWith(value=JDoctestRunner.class)
+import java.util.stream.Stream;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
+import net.cscott.jdoctest.JDoctestRunner;
+
+class MyClassDoctests {
+    @TestFactory
+    Stream<DynamicTest> doctests() {
+        return JDoctestRunner.doctests(MyClass.class);
+    }
+}
 ```
-The [`src/net/cscott/jdoctest/JDoctest.java`] file demonstrates how this is
-done.  JUnit can then directly execute the doctests for your class.
-`JDoctestRunner` assumes that your sources are found below a directory
-named `src`; if your sources are elsewhere you can use the annotation:
+The [`src/net/cscott/jdoctest/JDoctestSelfTest.java`] file demonstrates
+how this is done.  `JDoctestRunner` assumes that your sources are found
+below a directory named `src`; if your sources are elsewhere you can
+annotate the tested class with:
 ```java
     @SrcRoot(value="src/dir/here")
 ```
-If you need to use the `@SrcRoot` annotation extensively, you might find it
-easier to subclass `JDoctestRunner` and override its `defaultSrcRoot()` method.
+or pass the source directory explicitly, as
+`JDoctestRunner.doctests(MyClass.class, "src/dir/here")`.
 
 The following ant rule implements this option:
 ```xml
     <target name="test" ...>
-      <junit printsummary="yes" fork="yes" forkmode="once" haltonfailure="yes">
-	<formatter type="plain"/>
-	<test name="...your source files here..." />
+      <junitlauncher printsummary="true" haltonfailure="true">
 	<classpath refid="classpath.path" />
-	<jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
-	<assertions>
-	  <enable />
-	</assertions>
-      </junit>
+	<testclasses>
+	  <fileset dir="bin" includes="**/*Doctests.class" />
+	  <fork>
+	    <jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
+	    <jvmarg value="-ea" />
+	  </fork>
+	  <listener type="legacy-plain" />
+	</testclasses>
+      </junitlauncher>
     </target>
 ```
-The `fork="yes"` option is necessary here, or else the embedded javadoc doesn't
+The `<fork>` element is necessary here, or else the embedded javadoc doesn't
 get the correct classpath: ant seems to use a classloader which knows the
 correct classpath but leaves the system property `java.class.path` set
 arbitrarily (ie, wrong), and the embedded javadoc looks at `java.class.path`,
@@ -231,6 +251,10 @@ not its classloader, when resolving source references.
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+[HISTORY.md]:           HISTORY.md
+[Rhino]:                https://github.com/mozilla/rhino
+[JUnit]:                https://junit.org/
+[dynamic tests]:        https://docs.junit.org/current/user-guide/#writing-tests-dynamic-tests
 [doctest]:              https://docs.python.org/3/library/doctest.html
 [`doctestj`]:           http://code.google.com/p/doctestj/
 [Rhino's doctests]:     http://blog.norrisboyd.com/2008/03/doctest-in-rhino.html
@@ -240,3 +264,4 @@ not its classloader, when resolving source references.
 [google-code-prettify]: http://code.google.com/p/google-code-prettify/
 [`build.xml`]:          ./build.xml
 [`src/net/cscott/jdoctest/JDoctest.java`]: ./src/net/cscott/jdoctest/JDoctest.java
+[`src/net/cscott/jdoctest/JDoctestSelfTest.java`]: ./src/net/cscott/jdoctest/JDoctestSelfTest.java

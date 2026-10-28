@@ -25,7 +25,6 @@ import javax.tools.Diagnostic;
 
 import name.fraser.neil.plaintext.diff_match_patch;
 
-import org.junit.runner.RunWith;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
@@ -94,12 +93,17 @@ import jdk.javadoc.doclet.Taglet;
  *   js> new java.lang.Object()
  *   java.lang.Object@1ac2f9c
  * @doc.test
+ *   Doctests are evaluated using the most recent version of ECMAScript
+ *   that Rhino supports, so modern syntax may be used:
+ *   js> let squares = [1, 2, 3].map(x => x * x)
+ *   js> `squares: ${squares.join(", ")}`
+ *   squares: 1, 4, 9
+ * @doc.test
  *   We can even access private members!  (On JDK 16 and later, this
  *   requires <code>--add-opens java.base/java.lang=ALL-UNNAMED</code>.)
  *   js> new JDoctest().testsExpectedPass
  *   0
  */
-@RunWith(value=JDoctestRunner.class)
 public class JDoctest implements Taglet {
     private Reporter reporter = null;
     private DocTrees docTrees = null;
@@ -568,8 +572,8 @@ public class JDoctest implements Taglet {
 	int restrictedAccess = 0;
 	JDoctestContext(ContextFactory factory) {
 	    super(factory);
-	    // JavaScript 1.8 by default
-	    setLanguageVersion(Context.VERSION_1_8);
+	    // the most recent ECMAScript version supported by Rhino
+	    setLanguageVersion(Context.VERSION_ECMASCRIPT);
 	}
     }
     /**
