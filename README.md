@@ -228,11 +228,18 @@ Similarly, the JUnit console launcher will test every `@Doctests` class it
 finds with `--scan-classpath`, or beneath a package with
 `--select-package com.example`.
 
+The `<fork>` element is necessary here, or else the embedded javadoc doesn't
+get the correct classpath.  The engine gives javadoc the `java.class.path`
+system property, together with the classpath of the class loader which
+loaded your class, if it is a `URLClassLoader` (as the console launcher's
+is), but ant's own class loader is neither.
+
+### Maven and Gradle
+
 Maven and Gradle only look for tests among the classes in your test source
 tree, so they will not find `@Doctests` classes in your main source tree
 by themselves.  Add a single [suite] class to your test sources which
-selects your top-level package (subpackages are included), and depend on
-`org.junit.platform:junit-platform-suite`:
+selects your top-level package (subpackages are included):
 ```java
 import org.junit.platform.suite.api.IncludeEngines;
 import org.junit.platform.suite.api.SelectPackages;
@@ -241,16 +248,87 @@ import org.junit.platform.suite.api.Suite;
 @Suite
 @SelectPackages("com.example")
 @IncludeEngines("jdoctest")
-class AllDoctests { }
+class AllDoctestsTest { }
 ```
-Don't use a suite like this with tools that already see your compiled
-classes, or your doctests will run twice.
+Maven's Surefire only runs test classes whose names match its patterns
+(`Test*`, `*Test`, `*Tests` or `*TestCase`, case-sensitively, so
+`AllDoctests` would be skipped).  Don't use a suite like this with tools
+that already see your compiled classes, or your doctests will run twice.
 
-The `<fork>` element is necessary here, or else the embedded javadoc doesn't
-get the correct classpath.  The engine gives javadoc the `java.class.path`
-system property, together with the classpath of the class loader which
-loaded your class, if it is a `URLClassLoader` (as the console launcher's
-is), but ant's own class loader is neither.
+JDoctest isn't published to Maven Central; install the jar in your local
+repository with
+```
+mvn install:install-file -Dfile=jdoctest-2.0.jar -DgroupId=net.cscott \
+    -DartifactId=jdoctest -Dversion=2.0 -Dpackaging=jar
+```
+or publish it to your own repository.  Then add JDoctest, the JUnit suite
+engine and Rhino to your build, set the source directory in
+`src/test/resources/junit-platform.properties` as shown above
+(`net.cscott.jdoctest.srcRoot=src/main/java`), and add `--add-opens` if
+your doctests access private members.  Use Rhino's `org.mozilla:rhino-tools`
+artifact, which depends on `org.mozilla:rhino`; the `rhino-all` artifact
+on Maven Central depends on those jars as well, so it would put each Rhino
+class on the classpath twice.  For Maven:
+```xml
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>6.1.3</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>net.cscott</groupId>
+      <artifactId>jdoctest</artifactId>
+      <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-suite</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mozilla</groupId>
+      <artifactId>rhino-tools</artifactId>
+      <version>1.9.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.4</version>
+        <configuration>
+          <argLine>--add-opens=java.base/java.lang=ALL-UNNAMED</argLine>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+```
+For Gradle (in `build.gradle.kts`):
+```kotlin
+repositories { mavenLocal(); mavenCentral() }
+dependencies {
+    implementation("net.cscott:jdoctest:2.0")
+    testImplementation(platform("org.junit:junit-bom:6.1.3"))
+    testImplementation("org.junit.platform:junit-platform-suite")
+    testImplementation("org.mozilla:rhino-tools:1.9.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+tasks.test {
+    useJUnitPlatform()
+    jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED")
+}
+```
+The `jdoctest` dependency is only needed at compile time, for the
+`@Doctests` annotation; if you'd rather not ship it, make it
+`provided` (Maven) or `compileOnly` plus `testImplementation` (Gradle).
 
 ### Rerunning emitted tests
 
