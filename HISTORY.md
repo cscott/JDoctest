@@ -73,5 +73,65 @@ needed to compile and run the tests.
   (`-J-Dnet.cscott.jdoctest.output=...`) for classes in the unnamed
   package.
 
+Also included are changes made after 1.6 which were never released:
+
+* Doctests can access private and protected Java members.
+* A failing doctest shows a word-by-word diff of the expected and actual
+  output, using Neil Fraser's diff-match-patch.
+* Fixed whitespace stripping when the second line of a doctest is a
+  continuation (`>`) line.
+
+## 1.6 (2014-03-31)
+
+* JavaScript 1.7 is the default language version.
+* Fixed the default package import for packages with non-standard names
+  (such as all-caps `EDU.` prefixes) by importing via `Packages.`.
+* Failing doctests are reliably reported: works with JDK 1.7's new
+  location for `DocErrorReporter`, and exits with an error code if no
+  reporter can be found.
+* `build.xml` uses the `java.home` property to find `tools.jar`.
+* Travis CI integration; the README was converted to Markdown.
+
+## 1.5 (2009-08-31)
+
+* JUnit support: `RerunJDoctests` reruns the doctests emitted by
+  `net.cscott.jdoctest.output` as a parameterized JUnit test, and
+  annotating a class with `@RunWith(JDoctestRunner.class)` runs javadoc on
+  its source to execute its doctests as a JUnit test.
+* Fixed invoking javadoc several times in one process.
+* JDK 1.5 or later is required.
+* Eclipse project metadata.
+
+## 1.4 (2009-03-09)
+
+* `(EXPECT FAIL)` doctests report a warning instead of an error, for a
+  test-first style of development.
+* Setting the `net.cscott.jdoctest.output` property writes each doctest
+  out to a standalone `.js` file, named after its source position.
+* Clearer expected/actual output in failure messages.
+* Assertion errors no longer escape from a failing doctest.
+* Simpler google-code-prettify hookup, using `{@docRoot}`.
+
+## 1.3 (2009-02-10)
+
+* No "Tests" section is generated for elements without `@doc.test`
+  tags.
+
+## 1.2 (2009-02-07)
+
+* `@doc.test` tags work in package documentation.
+* Optional syntax highlighting of doctests with google-code-prettify.
+* A doctest whose first line starts with `js>` has no description.
+
+## 1.1 (2009-02-05)
+
+* Proper error messages when used with the standard doclet.
+* Documented the javadoc `-J-ea` option, to enable assertions.
+
+## 1.0 (2009-02-04)
+
+* Initial release: a javadoc taglet which runs `@doc.test` doctests
+  using Rhino 1.7R2.
+
 [Rhino]: https://github.com/mozilla/rhino
 [JUnit]: https://junit.org/
