@@ -48,11 +48,17 @@ JUnit support now uses [JUnit] 6 (Jupiter) instead of JUnit 4.
 `lib/junit-platform-console-standalone-6.1.3.jar` bundles everything
 needed to compile and run the tests.
 
-* `@RunWith(JDoctestRunner.class)` is gone.  Instead, write a test class
-  whose `@TestFactory` method returns `JDoctestRunner.doctests(MyClass.class)`;
-  see the README.  The `@SrcRoot` annotation still works when placed on the
-  tested class, and `JDoctestRunner.doctests(MyClass.class, "src/dir")`
-  replaces overriding `defaultSrcRoot()`.
+* `@RunWith(JDoctestRunner.class)` is replaced by the `@Doctests`
+  annotation, and `JDoctestRunner` has been removed.  JDoctest provides a
+  JUnit Platform test engine, which JUnit finds automatically, and which
+  runs the doctests of each `@Doctests` class that JUnit is asked to test;
+  see the README.  `@Doctests` has no JUnit dependency, so (unlike
+  `@RunWith`) it doesn't put JUnit on the classpath of your production
+  code.
+* `@SrcRoot("dir")` is replaced by `@Doctests(srcRoot="dir")`.  Instead of
+  overriding `JDoctestRunner.defaultSrcRoot()`, set the
+  `net.cscott.jdoctest.srcRoot` JUnit configuration parameter (for
+  example, in `junit-platform.properties`).
 * `RerunJDoctests` is now a `@TestFactory` instead of a `Parameterized`
   test.  Subclasses which changed the test directory should override
   `testDir()` instead of `listTests()`.  `listTests(String)` now returns a
@@ -73,13 +79,16 @@ needed to compile and run the tests.
   (`-J-Dnet.cscott.jdoctest.output=...`) for classes in the unnamed
   package.
 
-Also included are changes made after 1.6 which were never released:
+## 1.7 (2026-10-28)
+
+The last release of the 1.x line, which runs on JDK 1.5 through 12.
 
 * Doctests can access private and protected Java members.
 * A failing doctest shows a word-by-word diff of the expected and actual
   output, using Neil Fraser's diff-match-patch.
 * Fixed whitespace stripping when the second line of a doctest is a
   continuation (`>`) line.
+* Updated Rhino to 1.7R5pre.
 
 ## 1.6 (2014-03-31)
 

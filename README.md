@@ -150,18 +150,110 @@ source directory of your project.
 
 ## JUnit test support
 
-There are two ways to hook up doctests to [JUnit] 6.  Both provide
-[dynamic tests] which you return from a `@TestFactory` method.
+There are two ways to run doctests as [JUnit] 6 tests: annotate the
+classes whose javadoc contains doctests with `@Doctests`, or rerun the
+standalone tests emitted by the `net.cscott.jdoctest.output` option.
+Neither needs a stub test file for each tested class:
 
-The simplest uses the
-`net.cscott.jdoctest.output` option described above: running
-`net.cscott.jdoctest.RerunJDoctests` as a JUnit test will rerun all
-emitted standalone tests.  It assumes these tests were emitted into
-`api/tests`; if you prefer them someplace else, subclass `RerunJDoctests`
-and override its `testDir()` method to return the appropriate alternate
-directory name.  Alternatively, return
-`RerunJDoctests.doctests("your/dir/here")` from a `@TestFactory` method
-of your own.
+| Setup | Stub files needed |
+|-------|-------------------|
+| `@Doctests`, run by a tool which looks at your compiled classes (ant's `<junitlauncher>`, the JUnit console launcher, your IDE) | none |
+| `@Doctests`, run by Maven or Gradle (which only look at your *test* classes) | one `@Suite` class per project, selecting your top-level package |
+| `RerunJDoctests` | none, or one subclass per output directory if it isn't `api/tests` |
+
+### The `@Doctests` annotation
+
+Annotate each class whose javadoc contains doctests:
+```java
+import net.cscott.jdoctest.Doctests;
+
+/** ...
+ * @doc.test
+ *   js> MyClass.twice(3)
+ *   6
+ */
+@Doctests
+public class MyClass { ... }
+```
+The [`src/net/cscott/jdoctest/JDoctest.java`] file demonstrates this.
+The annotation has no dependencies, so your production code doesn't need
+JUnit on its classpath.
+
+JDoctest includes a JUnit Platform test engine (with engine ID
+`jdoctest`), which JUnit finds automatically when JDoctest is on the test
+classpath.  Whenever JUnit is asked to test a class, a package, or a
+directory of classes, this engine runs javadoc on the source file of each
+`@Doctests` class among them, and reports one test per class, which fails if
+any of that class's doctests fail.  Other classes are ignored.  Since the
+annotation marks the classes to test explicitly, the engine ignores the
+usual test class name patterns (such as `*Test`), although it honors
+package filters.
+
+The engine expects your sources to be found below a directory named
+`src`, relative to the current directory.  If your sources are elsewhere,
+set the `net.cscott.jdoctest.srcRoot` [configuration parameter], for
+example with a `junit-platform.properties` file on your test classpath:
+```
+net.cscott.jdoctest.srcRoot=src/main/java
+```
+or override it for a single class with `@Doctests(srcRoot="src/dir/here")`.
+
+The following ant rule tests all the `@Doctests` classes in `bin`, with no
+stub files needed:
+```xml
+    <target name="test" ...>
+      <junitlauncher printsummary="true" haltonfailure="true">
+	<classpath refid="classpath.path" />
+	<testclasses>
+	  <fileset dir="bin" includes="**/*.class" />
+	  <fork>
+	    <jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
+	    <jvmarg value="-ea" />
+	  </fork>
+	  <listener type="legacy-plain" />
+	</testclasses>
+      </junitlauncher>
+    </target>
+```
+Similarly, the JUnit console launcher will test every `@Doctests` class it
+finds with `--scan-classpath`, or beneath a package with
+`--select-package com.example`.
+
+Maven and Gradle only look for tests among the classes in your test source
+tree, so they will not find `@Doctests` classes in your main source tree
+by themselves.  Add a single [suite] class to your test sources which
+selects your top-level package (subpackages are included), and depend on
+`org.junit.platform:junit-platform-suite`:
+```java
+import org.junit.platform.suite.api.IncludeEngines;
+import org.junit.platform.suite.api.SelectPackages;
+import org.junit.platform.suite.api.Suite;
+
+@Suite
+@SelectPackages("com.example")
+@IncludeEngines("jdoctest")
+class AllDoctests { }
+```
+Don't use a suite like this with tools that already see your compiled
+classes, or your doctests will run twice.
+
+The `<fork>` element is necessary here, or else the embedded javadoc doesn't
+get the correct classpath: ant seems to use a classloader which knows the
+correct classpath but leaves the system property `java.class.path` set
+arbitrarily (ie, wrong), and the embedded javadoc looks at `java.class.path`,
+not its classloader, when resolving source references.
+
+### Rerunning emitted tests
+
+Running javadoc on each class is slow.  A faster alternative reruns the
+standalone tests written by the `net.cscott.jdoctest.output` option
+described above: running `net.cscott.jdoctest.RerunJDoctests` as a JUnit
+test reruns all the tests it finds beneath `api/tests`, as one test per
+doctest.  Of course, these tests are only as up to date as your last
+javadoc run.  If your tests are someplace else, subclass `RerunJDoctests`
+and override its `testDir()` method to return the alternate directory
+name, or return `RerunJDoctests.doctests("your/dir/here")` from a
+`@TestFactory` method of your own.
 
 The following ant rule implements this option:
 ```xml
@@ -178,55 +270,6 @@ The following ant rule implements this option:
       </junitlauncher>
     </target>
 ```
-
-A more elegant (but slower) mechanism invokes Javadoc on each of your
-source files to extract and execute the doctests.  Write a test class
-which returns `JDoctestRunner.doctests()` for each of your
-doctest-containing classes:
-```java
-import java.util.stream.Stream;
-import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.TestFactory;
-import net.cscott.jdoctest.JDoctestRunner;
-
-class MyClassDoctests {
-    @TestFactory
-    Stream<DynamicTest> doctests() {
-        return JDoctestRunner.doctests(MyClass.class);
-    }
-}
-```
-The [`src/net/cscott/jdoctest/JDoctestSelfTest.java`] file demonstrates
-how this is done.  `JDoctestRunner` assumes that your sources are found
-below a directory named `src`; if your sources are elsewhere you can
-annotate the tested class with:
-```java
-    @SrcRoot(value="src/dir/here")
-```
-or pass the source directory explicitly, as
-`JDoctestRunner.doctests(MyClass.class, "src/dir/here")`.
-
-The following ant rule implements this option:
-```xml
-    <target name="test" ...>
-      <junitlauncher printsummary="true" haltonfailure="true">
-	<classpath refid="classpath.path" />
-	<testclasses>
-	  <fileset dir="bin" includes="**/*Doctests.class" />
-	  <fork>
-	    <jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
-	    <jvmarg value="-ea" />
-	  </fork>
-	  <listener type="legacy-plain" />
-	</testclasses>
-      </junitlauncher>
-    </target>
-```
-The `<fork>` element is necessary here, or else the embedded javadoc doesn't
-get the correct classpath: ant seems to use a classloader which knows the
-correct classpath but leaves the system property `java.class.path` set
-arbitrarily (ie, wrong), and the embedded javadoc looks at `java.class.path`,
-not its classloader, when resolving source references.
 
 ## See also
 
@@ -254,7 +297,8 @@ not its classloader, when resolving source references.
 [HISTORY.md]:           HISTORY.md
 [Rhino]:                https://github.com/mozilla/rhino
 [JUnit]:                https://junit.org/
-[dynamic tests]:        https://docs.junit.org/current/user-guide/#writing-tests-dynamic-tests
+[configuration parameter]: https://docs.junit.org/current/user-guide/#running-tests-config-params
+[suite]:                https://docs.junit.org/current/user-guide/#junit-platform-suite-engine
 [doctest]:              https://docs.python.org/3/library/doctest.html
 [`doctestj`]:           http://code.google.com/p/doctestj/
 [Rhino's doctests]:     http://blog.norrisboyd.com/2008/03/doctest-in-rhino.html
@@ -264,4 +308,3 @@ not its classloader, when resolving source references.
 [google-code-prettify]: http://code.google.com/p/google-code-prettify/
 [`build.xml`]:          ./build.xml
 [`src/net/cscott/jdoctest/JDoctest.java`]: ./src/net/cscott/jdoctest/JDoctest.java
-[`src/net/cscott/jdoctest/JDoctestSelfTest.java`]: ./src/net/cscott/jdoctest/JDoctestSelfTest.java

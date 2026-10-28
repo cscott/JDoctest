@@ -104,6 +104,7 @@ import jdk.javadoc.doclet.Taglet;
  *   js> new JDoctest().testsExpectedPass
  *   0
  */
+@Doctests
 public class JDoctest implements Taglet {
     private Reporter reporter = null;
     private DocTrees docTrees = null;

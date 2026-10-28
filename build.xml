@@ -92,6 +92,10 @@ JDoctest build file.
 		   includeantruntime="false">
 		   <classpath refid="classpath.path" />
 	    </javac>
+	    <!-- register our JUnit Platform test engine -->
+	    <copy todir="${classes_dir}">
+	      <fileset dir="${src_dir}" includes="META-INF/**" />
+	    </copy>
     </target>
 
     <!-- run the javadoc tool on the source code -->
@@ -147,7 +151,7 @@ window['JAVADOC_BASE'] = '{@docRoot}';
            doesn't get the correct classpath -->
       <junitlauncher printsummary="true" haltonfailure="true">
 	<classpath refid="classpath.path" />
-	<test name="net.cscott.jdoctest.JDoctestSelfTest"
+	<test name="net.cscott.jdoctest.JDoctest"
 	      outputdir="${basedir}">
 	  <fork>
 	    <jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
@@ -198,7 +202,7 @@ window['JAVADOC_BASE'] = '{@docRoot}';
         <tarfileset dir="api" prefix="${package}-${version}/api" />
         <tarfileset dir="src" prefix="${package}-${version}/src"
                     includes="**/*.java **/*.html **/*.java.in
-			      **/*.js **/*.css"
+			      **/*.js **/*.css META-INF/**"
                     excludes=".git" />
         <tarfileset dir="lib" prefix="${package}-${version}/lib"
                     excludes="CVS" />
