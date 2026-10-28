@@ -73,11 +73,13 @@ To build:
 
 To install:
 
- * Move the generated `jdoctest-*.jar` as well as `lib/rhino*/js.jar` to
+ * Move the generated `jdoctest-*.jar` as well as `lib/rhino-all-*.jar` (Rhino 1.9.2,
+   including its shell) to
    a directory in your project.  Below, we will assume
    that you've placed both these files in `lib/jdoctest` in your project.
  * If you intend to use the JUnit test support, you wil also need
-   `lib/junit-4.6.jar` in your classpath (see junit rules for ant below).
+   `lib/junit-4.13.2.jar` and `lib/hamcrest-core-1.3.jar` in your
+   classpath (see junit rules for ant below).
    The javadoc tool is found automatically; no `tools.jar` is needed.
 
 ## Command-line usage
@@ -86,7 +88,7 @@ To invoke from the command line:
 
 ```sh
  javadoc -taglet net.cscott.jdoctest.JDoctest \
-         -tagletpath lib/jdoctest/jdoctest.jar:lib/jdoctest/js.jar:bin \
+         -tagletpath lib/jdoctest/jdoctest.jar:lib/jdoctest/rhino-all-1.9.2.jar:bin \
 	 -J-ea -J--add-opens=java.base/java.lang=ALL-UNNAMED \
          <your other javadoc options go here>
 ```
@@ -118,7 +120,7 @@ Ant rule:
 ```xml
   <javadoc failonerror="true" ...>
     <taglet name="net.cscott.jdoctest.JDoctest"
-            path="lib/jdoctest/jdoctest.jar:lib/jdoctest/js.jar:bin" />
+            path="lib/jdoctest/jdoctest.jar:lib/jdoctest/rhino-all-1.9.2.jar:bin" />
     <arg value="-J-ea" />
     <arg value="-J--add-opens=java.base/java.lang=ALL-UNNAMED" />
     <classpath> ...your classpath here... </classpath>

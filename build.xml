@@ -19,12 +19,13 @@ JDoctest build file.
       <property name="classes_dir"	value="${basedir}/bin"/>
       <!-- set the classpath -->
       <fileset id="jar.set" dir="lib">
-        <include name="rhino*/js.jar" />
+        <include name="rhino-all-*.jar" />
       </fileset>
       <path id="classpath.path">
         <pathelement path="${classes_dir}"/>
 	<fileset refid="jar.set" />
-        <pathelement path="lib/junit-4.6.jar"/>
+        <pathelement path="lib/junit-4.13.2.jar"/>
+        <pathelement path="lib/hamcrest-core-1.3.jar"/>
       </path>
     </target>
 
@@ -117,7 +118,7 @@ JDoctest build file.
                  author="true" use="true" version="true"
 		 breakiterator="true" failonerror="true">
 	  <taglet name="net.cscott.jdoctest.JDoctest"
-		  path="${package}-${version}.jar:lib/rhino1_7R5pre/js.jar"/>
+		  path="${package}-${version}.jar:lib/rhino-all-1.9.2.jar"/>
 	  <arg value="-J-Dnet.cscott.jdoctest.output=api/tests" />
 	  <arg value="-J-ea:net.cscott..." />
 	  <!-- the prettify hook in the page footer is javascript -->

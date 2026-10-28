@@ -3,7 +3,8 @@
 	<classpathentry kind="src" output="bin" path="src"/>
 	<classpathentry kind="var" path="JRE_LIB" sourcepath="JRE_SRC"/>
 	<classpathentry kind="con" path="bin"/>
-	<classpathentry kind="lib" path="lib/junit-4.6.jar"/>
-	<classpathentry kind="lib" path="lib/rhino1_7R5pre/js.jar"/>
+	<classpathentry kind="lib" path="lib/junit-4.13.2.jar"/>
+	<classpathentry kind="lib" path="lib/hamcrest-core-1.3.jar"/>
+	<classpathentry kind="lib" path="lib/rhino-all-1.9.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

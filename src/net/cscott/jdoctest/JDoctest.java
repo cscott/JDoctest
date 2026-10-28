@@ -32,6 +32,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.WrapFactory;
+import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.tools.shell.Global;
 
 import com.sun.source.doctree.DocCommentTree;
@@ -600,7 +601,7 @@ public class JDoctest implements Taglet {
 	}
 	@Override
 	public Object wrap(final Context cx, final Scriptable scope,
-			   final Object obj, final Class<?> staticType) {
+			   final Object obj, final TypeInfo staticType) {
 	    return withFallback(cx, () -> super.wrap(cx, scope, obj, staticType));
 	}
 	@Override
@@ -613,7 +614,7 @@ public class JDoctest implements Taglet {
 	public Scriptable wrapAsJavaObject(final Context cx,
 					   final Scriptable scope,
 					   final Object javaObject,
-					   final Class<?> staticType) {
+					   final TypeInfo staticType) {
 	    return (Scriptable) withFallback
 		(cx, () -> super.wrapAsJavaObject(cx, scope, javaObject,
 						  staticType));
