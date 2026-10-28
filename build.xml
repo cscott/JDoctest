@@ -17,16 +17,6 @@ JDoctest build file.
       <property name="lib_dir"            value="${basedir}/lib"/>
       <property name="src_dir"            value="${basedir}/src"/>
       <property name="classes_dir"	value="${basedir}/bin"/>
-      <!-- JDK 1.8's javadoc needs permission to put the prettify script
-           in the page footer, and is stricter about html in comments -->
-      <condition property="javadoc.args" value=""
-                 else="--allow-script-in-comments -Xdoclint:none">
-        <or>
-          <equals arg1="${ant.java.version}" arg2="1.5" />
-          <equals arg1="${ant.java.version}" arg2="1.6" />
-          <equals arg1="${ant.java.version}" arg2="1.7" />
-        </or>
-      </condition>
       <!-- set the classpath -->
       <fileset id="jar.set" dir="lib">
         <include name="rhino*/js.jar" />
@@ -35,9 +25,6 @@ JDoctest build file.
         <pathelement path="${classes_dir}"/>
 	<fileset refid="jar.set" />
         <pathelement path="lib/junit-4.6.jar"/>
-	<pathelement path="${jdk.home}/lib/tools.jar"/>
-        <!-- this version is more portable -->
-	<pathelement path="${java.home}/../lib/tools.jar"/>
       </path>
     </target>
 
@@ -101,7 +88,8 @@ JDoctest build file.
 	    <javac srcdir="${src_dir}"
 		   destdir="${classes_dir}"
 		   excludes=".git"
-		   deprecation="on" source="1.5" target="1.5" debug="true">
+		   deprecation="on" release="17" debug="true"
+		   includeantruntime="false">
 		   <classpath refid="classpath.path" />
 	    </javac>
     </target>
@@ -123,7 +111,7 @@ JDoctest build file.
                  windowtitle="${package} ${version} documentation"
 		 doctitle="JDoctest"
                  header="${ant.project.name} ${version}"
-		 source="1.5"
+		 source="17"
 		 bottom="Copyright (c) 2009 C. Scott Ananian"
                  access="protected" nodeprecated="false"
                  author="true" use="true" version="true"
@@ -132,7 +120,11 @@ JDoctest build file.
 		  path="${package}-${version}.jar:lib/rhino1_7R5pre/js.jar"/>
 	  <arg value="-J-Dnet.cscott.jdoctest.output=api/tests" />
 	  <arg value="-J-ea:net.cscott..." />
-	  <arg line="${javadoc.args}" />
+	  <!-- the prettify hook in the page footer is javascript -->
+	  <arg value="--allow-script-in-comments" />
+	  <!-- allow doctests to access private members of our classes -->
+	  <arg value="-J--add-opens=java.base/java.lang=ALL-UNNAMED" />
+	  <arg value="-Xdoclint:all,-missing" />
 	  <classpath refid="classpath.path" />
 	  <!-- fancy google code prettify support: see
 	       http://code.google.com/p/google-code-prettify/ -->
@@ -144,8 +136,7 @@ window['JAVADOC_BASE'] = '{@docRoot}';
 <script type="text/javascript" src="{@docRoot}/doc-files/loadpretty.js">
 </script>
           ]]></bottom>
-          <link href="http://java.sun.com/javase/6/docs/api"/>
-	  <link href="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec/"/>
+          <!-- javadoc links to the JDK API docs by default -->
 	</javadoc>
     </target>
 
@@ -158,6 +149,7 @@ window['JAVADOC_BASE'] = '{@docRoot}';
 	<formatter type="plain"/>
 	<test name="net.cscott.jdoctest.JDoctest" />
 	<classpath refid="classpath.path" />
+	<jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
 	<assertions>
 	  <enable package="net.cscott"/>
 	</assertions>
@@ -169,10 +161,11 @@ window['JAVADOC_BASE'] = '{@docRoot}';
          changed. -->
     <target name="retest" depends="compile"
 	    description="Re-runs tests from the api/tests directory">
-      <junit>
+      <junit fork="yes" forkmode="once">
 	<formatter type="plain"/>
 	<test name="net.cscott.jdoctest.RerunJDoctests" />
 	<classpath refid="classpath.path" />
+	<jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
 	<assertions>
 	  <enable package="net.cscott"/>
 	</assertions>
@@ -206,9 +199,8 @@ window['JAVADOC_BASE'] = '{@docRoot}';
         <tarfileset dir="lib" prefix="${package}-${version}/lib"
                     excludes="CVS" />
         <tarfileset dir="." prefix="${package}-${version}"
-         includes="README README.md AUTHORS COPYING ChangeLog NEWS .gitignore
-                   build.xml ${package}-${version}.jar
-		   sample.build.properties" />
+         includes="README AUTHORS COPYING ChangeLog NEWS .gitignore
+                   build.xml ${package}-${version}.jar" />
       </tar>
     </target>
 </project>

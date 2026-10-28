@@ -11,12 +11,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.InaccessibleObjectException;
+import java.util.EnumSet;
 import java.util.LinkedList;
-import java.util.Map;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.lang.model.element.Element;
+import javax.lang.model.element.PackageElement;
+import javax.tools.Diagnostic;
 
 import name.fraser.neil.plaintext.diff_match_patch;
 
@@ -25,20 +30,28 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.WrapFactory;
 import org.mozilla.javascript.tools.shell.Global;
 
-import com.sun.javadoc.Doc;
-import com.sun.javadoc.DocErrorReporter;
-import com.sun.javadoc.PackageDoc;
-import com.sun.javadoc.ProgramElementDoc;
-import com.sun.javadoc.RootDoc;
-import com.sun.javadoc.SourcePosition;
-import com.sun.javadoc.Tag;
-import com.sun.tools.doclets.Taglet;
+import com.sun.source.doctree.DocCommentTree;
+import com.sun.source.doctree.DocTree;
+import com.sun.source.doctree.UnknownBlockTagTree;
+import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.LineMap;
+import com.sun.source.util.DocTreePath;
+import com.sun.source.util.DocTrees;
+import com.sun.source.util.TreePath;
+
+import jdk.javadoc.doclet.Doclet;
+import jdk.javadoc.doclet.DocletEnvironment;
+import jdk.javadoc.doclet.Reporter;
+import jdk.javadoc.doclet.StandardDoclet;
+import jdk.javadoc.doclet.Taglet;
 
 /**
  * JDoctest implementing doctests via a @doc.test taglet.  This tag can be
- * used in any kind of {@link com.sun.javadoc.Doc}.  It is not an
+ * used in any kind of {@link javax.lang.model.element.Element}.  It is not an
  * inline tag.  A "@doc.test" tag specifies an interactive javascript
  * session, in an environment where the class' package has been imported.
  * The output of the javascript session should match the output
@@ -60,9 +73,9 @@ import com.sun.tools.doclets.Taglet;
  *   js> try {
  *     >   java.lang.String("hi").charAt(3);
  *     > } catch (e) {
- *     >   print(e.javaException.getMessage())
+ *     >   print(e.javaException.getClass().getName())
  *     > }
- *   String index out of range: 3
+ *   java.lang.StringIndexOutOfBoundsException
  * @doc.test
  *   This demonstrates that the current package has been imported:
  *   js> JDoctest
@@ -80,13 +93,15 @@ import com.sun.tools.doclets.Taglet;
  *   js> new java.lang.Object()
  *   java.lang.Object@1ac2f9c
  * @doc.test
- *   We can even access private members!
+ *   We can even access private members!  (On JDK 16 and later, this
+ *   requires <code>--add-opens java.base/java.lang=ALL-UNNAMED</code>.)
  *   js> new JDoctest().testsExpectedPass
  *   0
  */
 @RunWith(value=JDoctestRunner.class)
 public class JDoctest implements Taglet {
-    private DocErrorReporter docErrorReporter = null;
+    private Reporter reporter = null;
+    private DocTrees docTrees = null;
     private static boolean versionPrinted = false;
     // JavaScript context factory
     private ContextFactory contextFactory = new JDoctestContextFactory();
@@ -99,178 +114,210 @@ public class JDoctest implements Taglet {
      */
     public String getName() { return "doc.test"; }
     /**
-     * Will return true since <code>@doc.test</code>
-     * can be used in field documentation.
+     * Will return all locations, since <code>@doc.test</code>
+     * can be used in overview, module, package, type, constructor,
+     * method, and field documentation.
+     * @doc.test
+     *  js> new JDoctest().getAllowedLocations()
+     *  [OVERVIEW, MODULE, PACKAGE, TYPE, CONSTRUCTOR, METHOD, FIELD]
      */
-    public boolean inField() {
-        return true;
-    }
-    /**
-     * Will return true since <code>@doc.test</code>
-     * can be used in constructor documentation.
-     */
-    public boolean inConstructor() {
-        return true;
-    }
-    /**
-     * Will return true since <code>@doc.test</code>
-     * can be used in method documentation.
-     */
-    public boolean inMethod() {
-        return true;
-    }
-    /**
-     * Will return true since <code>@doc.test</code>
-     * can be used in method documentation.
-     */
-    public boolean inOverview() {
-        return true;
-    }
-    /**
-     * Will return true since <code>@doc.test</code>
-     * can be used in package documentation.
-     */
-    public boolean inPackage() {
-        return true;
-    }
-    /**
-     * Will return true since <code>@doc.test</code>
-     * can be used in type documentation (classes or interfaces).
-     */
-    public boolean inType() {
-        return true;
+    public Set<Location> getAllowedLocations() {
+        return EnumSet.allOf(Location.class);
     }
     /**
      * Will return false since <code>@doc.test</code>
      * is not an inline tag.
+     * @doc.test
+     *  js> new JDoctest().isInlineTag()
+     *  false
      */
-    
     public boolean isInlineTag() {
         return false;
     }
-    
+
     /**
-     * Register this Taglet.
-     * @param tagletMap  the map to register this tag to.
-     * @doc.test
-     *  js> m = java.util.HashMap()
-     *  {}
-     *  js> JDoctest.register(m)
-     *  js> m.get("doc.test")
-     *  net.cscott.jdoctest.JDoctest@de1b8a
+     * Initialize this Taglet.  We fetch the {@link Reporter} from the
+     * standard doclet (if that is the doclet in use) so that doctest
+     * failures can be reported as javadoc errors.
+     * @param env the doclet environment
+     * @param doclet the doclet which instantiated this taglet
      */
-    @SuppressWarnings("unchecked")
-    public static void register(Map tagletMap) {
-       JDoctest taglet = new JDoctest();
-       // this is an evil hack: try to fetch the rootDoc from the
-       // standard HTML doclet, in order to get a DocErrorReporter
-       if (taglet.docErrorReporter == null)
-           try {
-               // JDK 1.7ish
-               //taglet.docErrorReporter =
-               //    com.sun.tools.doclets.formats.html.ConfigurationImpl
-               //    .getInstance().root;
-               Class<?> c = Class.forName
-                   ("com.sun.tools.doclets.formats.html.ConfigurationImpl");
-               Method m = c.getMethod("getInstance");
-               Object config = m.invoke(null);
-               Field f = config.getClass().getField("root");
-               taglet.docErrorReporter = (DocErrorReporter)
-                   f.get(config);
-           } catch (Throwable t) { /* ignore */ }
-       if (taglet.docErrorReporter == null)
-           try {
-               // JDK 1.4ish
-               //taglet.docErrorReporter =
-               //    com.sun.tools.doclets.standard.Standard.htmlDoclet
-               //    .configuration().root;
-               Class<?> c = Class.forName
-                   ("com.sun.tools.doclets.standard.Standard.htmlDoclet");
-               Method m = c.getMethod("configuration");
-               Object config = m.invoke(null);
-               Field f = config.getClass().getField("root");
-               taglet.docErrorReporter = (DocErrorReporter)
-                   f.get(config);
-           } catch (Throwable t) { /* ignore */ }
-       // if taglet.docErrorReporter is still null, we'll look for one
-       // when we are given our first tag (JDK 1.8)
-       if (tagletMap.containsKey(taglet.getName())) {
-           tagletMap.remove(taglet.getName());
-       }
-       tagletMap.put(taglet.getName(), taglet);
-       taglet.printVersion();
+    @Override
+    public void init(DocletEnvironment env, Doclet doclet) {
+        this.docTrees = env.getDocTrees();
+        if (doclet instanceof StandardDoclet)
+            this.reporter = ((StandardDoclet)doclet).getReporter();
+        // if reporter is still null, we'll do the compatible
+        // thing and just emit errors to stderr
+        if (!versionPrinted) {
+            if (reporter != null)
+                reporter.print(Diagnostic.Kind.NOTE,
+                               Version.PACKAGE_STRING+"; "+
+                               "Bug reports to "+Version.PACKAGE_BUGREPORT);
+            versionPrinted = true;
+        }
     }
-    private void printVersion() {
-       if (docErrorReporter!=null && !versionPrinted) {
-	   docErrorReporter.printNotice
-	       (Version.PACKAGE_STRING+"; "+
-		"Bug reports to "+Version.PACKAGE_BUGREPORT);
-	   versionPrinted = true;
-       }
-    }
+
     /**
-     * Another evil hack: fetch the error reporter of the javadoc
-     * environment from the given <code>Doc</code>, since JDK 1.8's
-     * standard doclet no longer makes its configuration available
-     * statically.  If none can be found, we'll do the compatible
-     * thing and just emit errors to stderr.
-     */
-    private void findErrorReporter(Doc d) {
-       try {
-           //docErrorReporter = ((DocImpl)d).env.messager;
-           Object env = getField(d, "env");
-           Object messager = getField(env, "messager");
-           if (messager instanceof DocErrorReporter)
-               docErrorReporter = (DocErrorReporter) messager;
-       } catch (Throwable t) { /* ignore */ }
-       printVersion();
-    }
-    private static Object getField(Object o, String name) throws Exception {
-       for (Class<?> c = o.getClass(); c != null; c = c.getSuperclass())
-           try {
-               Field f = c.getDeclaredField(name);
-               f.setAccessible(true);
-               return f.get(o);
-           } catch (NoSuchFieldException e) { /* try superclass */ }
-       throw new NoSuchFieldException(name);
-    }
-    /**
-     * Given the <code>Tag</code> representation of this custom
+     * Given a list of <code>DocTree</code>s representing this custom
      * tag, return its string representation.
-     * @param tag   the <code>Tag</code> representation of this custom tag.
+     * @param tags  the list of <code>DocTree</code>s representing this
+     *              custom tag.
+     * @param element the element to which the enclosing comment belongs
      */
-    public String toString(Tag tag) {
-	return toString(new Tag[] { tag });
-    }
-    
-    /**
-     * Given an array of <code>Tag</code>s representing this custom
-     * tag, return its string representation.
-     * @param tags  the array of <code>Tag</code>s representing of this custom tag.
-     */
-    public String toString(Tag[] tags) {
-	if (tags.length == 0) return "";
-	if (docErrorReporter == null)
-	    findErrorReporter(tags[0].holder());
+    public String toString(List<? extends DocTree> tags, Element element) {
+	if (tags.isEmpty()) return "";
 	StringBuilder sb = new StringBuilder();
-	sb.append("<dt><b>Tests:</b></dt><dd>");
-	for (int i=0; i<tags.length; i++) {
-	    SourcePosition sp = tags[i].position();
-	    String pkg = getPackage(tags[i].holder());
-	    doOne(pkg, sp, i, tags[i].text(), sb);
+	sb.append("<dt>Tests:</dt><dd>");
+	for (int i=0; i<tags.size(); i++) {
+	    DocTree tag = tags.get(i);
+	    SourcePosition sp = position(element, tag);
+	    String pkg = getPackage(element);
+	    doOne(pkg, sp, i, text(tag, sp), sb);
 	}
 	sb.append("</dd>");
 	return sb.toString();
     }
-    private static String getPackage(Doc d) {
-	if (d instanceof ProgramElementDoc)
-	    return getPackage(((ProgramElementDoc)d).containingPackage());
-	if (d instanceof PackageDoc)
-	    return ((PackageDoc)d).name();
-	if (d instanceof RootDoc)
+    private static final Pattern P_comment_star =
+	Pattern.compile("\\A[ \\t]*\\*+");
+    private static final Pattern P_leading_ws =
+	Pattern.compile("\\A[ \\t]*");
+    private String text(DocTree tag, SourcePosition sp) {
+	if (!(tag instanceof UnknownBlockTagTree))
+	    return "";
+	List<? extends DocTree> content =
+	    ((UnknownBlockTagTree)tag).getContent();
+	StringBuilder sb = new StringBuilder();
+	for (DocTree t : content)
+	    sb.append(t.toString());
+	String body = sb.toString();
+	if (content.isEmpty()) return body;
+	// The doc tree omits the newline and indentation between the tag
+	// name and its content, but we need them to properly strip
+	// indentation when the test begins on the line following the tag.
+	String[] lines = body.split("\n", -1);
+	if (sp.docTreePath == null) {
+	    // No source available (package.html, etc): guess that the
+	    // first line is indented like the least-indented line which
+	    // follows it.
+	    String indent = null;
+	    for (int i=1; i<lines.length; i++) {
+		if (lines[i].trim().isEmpty()) continue;
+		String ws = leadingWhitespace(lines[i]);
+		if (indent == null || ws.length() < indent.length())
+		    indent = ws;
+	    }
+	    return (indent == null) ? body : ("\n" + indent + body);
+	}
+	// Recover the indentation from the source.  Javadoc may have
+	// stripped some indentation from each line of the comment (JDK 23
+	// and later strip the indentation common to all lines) so we find
+	// how much was stripped from a later line and adjust to match.
+	CompilationUnitTree cu =
+	    sp.docTreePath.getTreePath().getCompilationUnit();
+	DocCommentTree dc = sp.docTreePath.getDocComment();
+	LineMap lm = cu.getLineMap();
+	long tagPos = docTrees.getSourcePositions()
+	    .getStartPosition(cu, dc, tag);
+	long bodyPos = docTrees.getSourcePositions()
+	    .getStartPosition(cu, dc, content.get(0));
+	CharSequence src;
+	try {
+	    src = cu.getSourceFile().getCharContent(true);
+	} catch (IOException e) {
+	    return body;
+	}
+	if (tagPos < 0 || bodyPos < tagPos || bodyPos > src.length())
+	    return body;
+	long firstLine = lm.getLineNumber(bodyPos);
+	if (firstLine == lm.getLineNumber(tagPos))
+	    return body; // test starts on the same line as the tag
+	String indent = commentLineIndent
+	    (src.subSequence((int) lm.getStartPosition(firstLine),
+			     (int) bodyPos).toString());
+	for (int i=1; i<lines.length; i++) {
+	    if (lines[i].trim().isEmpty()) continue;
+	    long start = lm.getStartPosition(firstLine + i);
+	    if (start < 0) break;
+	    int end = (int) start;
+	    while (end < src.length() && src.charAt(end) != '\n') end++;
+	    String raw = commentLineIndent
+		(src.subSequence((int) start, end).toString());
+	    int stripped = raw.length()-leadingWhitespace(lines[i]).length();
+	    if (stripped > 0)
+		indent = indent.substring(Math.min(stripped, indent.length()));
+	    break;
+	}
+	return "\n" + indent + body;
+    }
+    private static String leadingWhitespace(String line) {
+	Matcher m = P_leading_ws.matcher(line);
+	m.find();
+	return m.group();
+    }
+    /** Returns the indentation of a doc comment line, following the
+     *  leading asterisks (if any). */
+    private static String commentLineIndent(String line) {
+	return leadingWhitespace(P_comment_star.matcher(line).replaceFirst(""));
+    }
+    private static String getPackage(Element e) {
+	// overview documentation has no element
+	while (e != null && !(e instanceof PackageElement))
+	    e = e.getEnclosingElement();
+	if (e == null || ((PackageElement)e).isUnnamed())
 	    return null; // "unnamed package"
-	assert false : "unknown Doc type "+d;
-	return null;
+	return ((PackageElement)e).getQualifiedName().toString();
+    }
+
+    /** The location of a tag in a source file. */
+    private static class SourcePosition {
+	/** Path to the tag, for error reporting; may be null. */
+	final DocTreePath docTreePath;
+	/** The element containing the tag; may be null. */
+	final Element element;
+	/** Path to the source file. */
+	final String path;
+	/** Line number of the tag, or 0 if unknown. */
+	final int line;
+	SourcePosition(DocTreePath docTreePath, Element element,
+		       String path, int line) {
+	    this.docTreePath = docTreePath;
+	    this.element = element;
+	    this.path = path;
+	    this.line = line;
+	}
+	/** Basename of the source file. */
+	String fileName() { return new File(path).getName(); }
+	@Override
+	public String toString() {
+	    return (line > 0) ? (path + ":" + line) : path;
+	}
+    }
+    private SourcePosition position(Element element, DocTree tag) {
+	TreePath tp = (docTrees == null || element == null) ? null :
+	    docTrees.getPath(element);
+	DocCommentTree dc = (tp == null) ? null :
+	    docTrees.getDocCommentTree(tp);
+	if (dc == null) {
+	    // package.html, overview.html, etc.
+	    String name = (element == null) ? "overview" : element.toString();
+	    return new SourcePosition(null, element, name, 0);
+	}
+	CompilationUnitTree cu = tp.getCompilationUnit();
+	long pos = docTrees.getSourcePositions()
+	    .getStartPosition(cu, dc, tag);
+	int line = (pos < 0) ? 0 : (int) cu.getLineMap().getLineNumber(pos);
+	DocTreePath dtp = new DocTreePath(new DocTreePath(tp, dc), tag);
+	return new SourcePosition(dtp, element,
+				  cu.getSourceFile().toUri().getPath(), line);
+    }
+    private void report(Diagnostic.Kind kind, SourcePosition sp, String msg) {
+	if (sp.docTreePath != null)
+	    reporter.print(kind, sp.docTreePath, msg);
+	else if (sp.element != null)
+	    reporter.print(kind, sp.element, msg);
+	else
+	    reporter.print(kind, msg);
     }
 
     private int testsExpectedPass = 0, testsExpectedFail = 0;
@@ -289,6 +336,9 @@ public class JDoctest implements Taglet {
 	    String prefix = m.group();
 	    test_text = test_text.replaceAll(Pattern.quote(prefix), "\n");
 	}
+	// ignore the newline following the tag name
+	if (test_text.startsWith("\n"))
+	    test_text = test_text.substring(1);
 	// look for EXPECT FAIL in the test.
         boolean expect_fail = Patterns.expectFail(test_text);
 
@@ -305,21 +355,20 @@ public class JDoctest implements Taglet {
 	    // okay, evaluate the doctest.
 	    // if the tests fail, we will throw an exception here.
 	    int testsRun = global.runDoctest(cx, global, test_text,
-					     sp.file().getName(), sp.line());
+					     sp.fileName(), sp.line);
 	    if (expect_fail) {
 		testsUnexpectedPass += testsRun;
 		fail = "doctest unexpectedly passed.";
-		if (docErrorReporter!=null)
-		    docErrorReporter.printError(sp, fail);
+		if (reporter!=null)
+		    report(Diagnostic.Kind.ERROR, sp, fail);
 		else {
 		    System.err.println("DOCTEST UNEXPECTED PASS at "+sp);
 		    System.exit(2);
 		}
 	    } else {
 		testsExpectedPass += testsRun;
-		if (docErrorReporter!=null && false /* too noisy */)
-		    docErrorReporter.printNotice(sp,
-						 testsRun+" tests passed.");
+		if (reporter!=null && false /* too noisy */)
+		    report(Diagnostic.Kind.NOTE, sp, testsRun+" tests passed.");
 	    }
 	} catch (AssertionError e) {
 	    fail = e.getMessage();
@@ -352,15 +401,15 @@ public class JDoctest implements Taglet {
 	    }
 	    if (expect_fail) {
 		testsExpectedFail += 1;
-		if (docErrorReporter!=null)
-		    docErrorReporter.printWarning(sp, "Doctest failed as expected at "+sp);
+		if (reporter!=null)
+		    report(Diagnostic.Kind.WARNING, sp, "Doctest failed as expected at "+sp);
 		else {
 		    System.err.println("DOCTEST EXPECTED FAIL at "+sp);
 		}
 	    } else {
 		testsUnexpectedFail += 1;
-		if (docErrorReporter!=null)
-		    docErrorReporter.printError(sp, html_unescape(fail));
+		if (reporter!=null)
+		    report(Diagnostic.Kind.ERROR, sp, html_unescape(fail));
 		else {
 		    System.err.println("DOCTEST UNEXPECTED FAIL at "+sp);
 		    System.err.println(html_unescape(fail));
@@ -371,10 +420,11 @@ public class JDoctest implements Taglet {
 	// emit the test text to a file, if requested
 	String test_path = System.getProperty("net.cscott.jdoctest.output");
 	if (test_path != null) {
-	    File outdir = new File(test_path, packageName);
-	    String baseName=sp.file().getName().replaceFirst("\\..*","");
+	    File outdir = (packageName == null) ? new File(test_path) :
+		new File(test_path, packageName);
+	    String baseName=sp.fileName().replaceFirst("\\..*","");
 	    File outf = new File
-		(outdir, "test-"+baseName+"-"+sp.line()+"-"+(tagNum+1)+".js");
+		(outdir, "test-"+baseName+"-"+sp.line+"-"+(tagNum+1)+".js");
 	    try {
 		outdir.mkdirs(); // ensure directory exists
 		Writer w = new OutputStreamWriter
@@ -384,11 +434,12 @@ public class JDoctest implements Taglet {
 			test_text.replaceFirst("js>","js> "+prologue+"\njs>"));
 		w.close();
 	    } catch (IOException e) {
-		if (docErrorReporter!=null)
-		    docErrorReporter.printError(sp, "Couldn't write to "+outf);
-		else
+		if (reporter!=null)
+		    report(Diagnostic.Kind.ERROR, sp, "Couldn't write to "+outf);
+		else {
 		    System.err.println("ERROR: Couldn't write to "+outf);
 		    System.exit(3);
+		}
 	    }
 	}
 	// typeset the text.
@@ -493,22 +544,86 @@ public class JDoctest implements Taglet {
     /** JavaScript context with privileged access to Java. */
     static class JDoctestContextFactory extends ContextFactory {
 	protected Context makeContext() {
-	    return new Context(this) {
-		// JavaScript 1.8 by default
-		{ setLanguageVersion(Context.VERSION_1_8); }
-	    };
-
+	    Context cx = new JDoctestContext(this);
+	    cx.setWrapFactory(new JDoctestWrapFactory());
+	    return cx;
 	}
 	// enable privileged access to Java
 	public boolean hasFeature(Context cx, int featureIndex) {
 	    switch (featureIndex) {
 	    case Context.FEATURE_ENHANCED_JAVA_ACCESS:
+		return !(cx instanceof JDoctestContext &&
+			 ((JDoctestContext)cx).restrictedAccess > 0);
 	    case Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER:
 	    case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
 		return true;
 	    default:
 		return super.hasFeature(cx, featureIndex);
 	    }
+	}
+    }
+    static class JDoctestContext extends Context {
+	/** When positive, FEATURE_ENHANCED_JAVA_ACCESS is disabled. */
+	int restrictedAccess = 0;
+	JDoctestContext(ContextFactory factory) {
+	    super(factory);
+	    // JavaScript 1.8 by default
+	    setLanguageVersion(Context.VERSION_1_8);
+	}
+    }
+    /**
+     * Wrap factory which falls back to public-only access for classes
+     * whose private members can't be made accessible.  Since JDK 16,
+     * the JDK's modules are strongly encapsulated, and Rhino's
+     * FEATURE_ENHANCED_JAVA_ACCESS fails when it calls
+     * <code>setAccessible()</code> on (for instance) the private
+     * members of <code>java.lang.Object</code>.  Use (for example)
+     * <code>--add-opens java.base/java.lang=ALL-UNNAMED</code> to allow
+     * access to the private members of your own classes.
+     */
+    static class JDoctestWrapFactory extends WrapFactory {
+	private interface Wrapper { Object wrap(); }
+	private static Object withFallback(Context cx, Wrapper w) {
+	    try {
+		return w.wrap();
+	    } catch (InaccessibleObjectException e) {
+		if (!(cx instanceof JDoctestContext)) throw e;
+		// try again with public-only access
+		JDoctestContext jcx = (JDoctestContext) cx;
+		jcx.restrictedAccess++;
+		try {
+		    return w.wrap();
+		} finally {
+		    jcx.restrictedAccess--;
+		}
+	    }
+	}
+	@Override
+	public Object wrap(final Context cx, final Scriptable scope,
+			   final Object obj, final Class<?> staticType) {
+	    return withFallback(cx, () -> super.wrap(cx, scope, obj, staticType));
+	}
+	@Override
+	public Scriptable wrapNewObject(final Context cx, final Scriptable scope,
+					final Object obj) {
+	    return (Scriptable) withFallback
+		(cx, () -> super.wrapNewObject(cx, scope, obj));
+	}
+	@Override
+	public Scriptable wrapAsJavaObject(final Context cx,
+					   final Scriptable scope,
+					   final Object javaObject,
+					   final Class<?> staticType) {
+	    return (Scriptable) withFallback
+		(cx, () -> super.wrapAsJavaObject(cx, scope, javaObject,
+						  staticType));
+	}
+	@Override
+	public Scriptable wrapJavaClass(final Context cx, final Scriptable scope,
+					@SuppressWarnings("rawtypes")
+					final Class javaClass) {
+	    return (Scriptable) withFallback
+		(cx, () -> super.wrapJavaClass(cx, scope, javaClass));
 	}
     }
 }

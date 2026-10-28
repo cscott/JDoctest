@@ -38,9 +38,9 @@ is straightforward. An example from the top of the
  *   js> try {
  *     >   java.lang.String("hi").charAt(3);
  *     > } catch (e) {
- *     >   print(e.javaException.getMessage())
+ *     >   print(e.javaException.getClass().getName())
  *     > }
- *   String index out of range: 3
+ *   java.lang.StringIndexOutOfBoundsException
  * @doc.test
  *   This demonstrates that the current package has been imported:
  *   js> JDoctest
@@ -63,13 +63,9 @@ public class JDoctest implements Taglet { ... }
 ## Build and install
 
 To build:
- * You must have a JDK between 1.5 and 9.  In JDoctest version 1.5 I
-   removed support for pre-1.5 JDKs.  JDK 10 removed the
-   `com.sun.tools.doclets` taglet API which JDoctest 1.x uses; JDoctest 2.0
-   supports JDK 17 and later.
-   * In older JDKs, you might need to copy `sample.build.properties`
-   to `build.properties` and edit it to properly reflect that path to
-   your JDK, so that we can find the JDK's `tools.jar` file.
+ * You must have JDK 17 or greater.  JDoctest uses the `jdk.javadoc.doclet`
+   taglet API; the old `com.sun.javadoc` API it used through version 1.7
+   was removed in JDK 13.
  * Run `ant javadoc`, which will build the source code and then run its
    doctests.
  * One (ignored) failure is to be expected as the tests are run; it is
@@ -81,8 +77,8 @@ To install:
    a directory in your project.  Below, we will assume
    that you've placed both these files in `lib/jdoctest` in your project.
  * If you intend to use the JUnit test support, you wil also need
-   `lib/junit-4.6.jar` and the `tools.jar` from your JDK release in your
-   classpath (see junit rules for ant below).
+   `lib/junit-4.6.jar` in your classpath (see junit rules for ant below).
+   The javadoc tool is found automatically; no `tools.jar` is needed.
 
 ## Command-line usage
 
@@ -91,7 +87,7 @@ To invoke from the command line:
 ```sh
  javadoc -taglet net.cscott.jdoctest.JDoctest \
          -tagletpath lib/jdoctest/jdoctest.jar:lib/jdoctest/js.jar:bin \
-	 -J-ea \
+	 -J-ea -J--add-opens=java.base/java.lang=ALL-UNNAMED \
          <your other javadoc options go here>
 ```
 
@@ -100,21 +96,17 @@ into `bin`; change that part of the `-tagletpath` if your classes are
 elsewhere.  Your compiled `.class` files must be included on the
 `tagletpath` so that we can run the doctests.
 
-On JDK 8 and later, add `-Xdoclint:none` to the javadoc command line, or
-javadoc's own checks will reject the `js>` prompts in your doctests.
-JDK 8u121 and later also need `--allow-script-in-comments` if you use
-the `<script>` tags for syntax highlighting described below.
-
-On JDK 9, also add
-`-J--add-opens=jdk.javadoc/com.sun.tools.javadoc.main=ALL-UNNAMED`.
-Without it, JDoctest can't find javadoc's error reporter: failing
-doctests are printed to standard error, and javadoc exits as soon as a
-doctest fails.
-
 Note that you need to use the `-J-ea` option if you want assertions to
 be enabled during the evaluation of the doctests.  You can use
 `-J-ea:<your package>...` to only enable assertions in your code (not in
 the entire javadoc tool).
+
+Doctests can access the private members of your classes.  On JDK 16 and
+later, this requires the `-J--add-opens=java.base/java.lang=ALL-UNNAMED`
+option, since Rhino needs to make the members of `java.lang.Object`
+accessible as well.  Without it, doctests only see public members.
+JDK classes are always accessed through their public members, unless
+you `--add-opens` their packages as well.
 
 Add `-J-Dnet.cscott.jdoctest.output=<dir>` to emit the javascript doctests
 into files in `<dir>` where they can be re-run standalone.  This is
@@ -128,6 +120,7 @@ Ant rule:
     <taglet name="net.cscott.jdoctest.JDoctest"
             path="lib/jdoctest/jdoctest.jar:lib/jdoctest/js.jar:bin" />
     <arg value="-J-ea" />
+    <arg value="-J--add-opens=java.base/java.lang=ALL-UNNAMED" />
     <classpath> ...your classpath here... </classpath>
   </javadoc>
 ```
@@ -169,6 +162,7 @@ The following ant rule implements this option:
 	<formatter type="plain"/>
 	<test name="net.cscott.jdoctest.RerunJDoctests" />
 	<classpath refid="classpath.path" />
+	<jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
 	<assertions>
 	  <enable/>
 	</assertions>
@@ -199,6 +193,7 @@ The following ant rule implements this option:
 	<formatter type="plain"/>
 	<test name="...your source files here..." />
 	<classpath refid="classpath.path" />
+	<jvmarg value="--add-opens=java.base/java.lang=ALL-UNNAMED" />
 	<assertions>
 	  <enable />
 	</assertions>
@@ -213,7 +208,7 @@ not its classloader, when resolving source references.
 
 ## See also
 
-*  http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/taglet/overview.html
+*  https://docs.oracle.com/en/java/javase/21/docs/api/jdk.javadoc/jdk/javadoc/doclet/Taglet.html
 
 ## LICENSE
 
@@ -238,8 +233,8 @@ not its classloader, when resolving source references.
 [`doctestj`]:           http://code.google.com/p/doctestj/
 [Rhino's doctests]:     http://blog.norrisboyd.com/2008/03/doctest-in-rhino.html
 [Calling from JavaScript into Java]: https://developer.mozilla.org/en-US/docs/Rhino/Scripting_Java
-[`Taglet`]:             http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/taglet/overview.html
-[`Doclet`]:             http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/doclet/overview.html
+[`Taglet`]:             https://docs.oracle.com/en/java/javase/21/docs/api/jdk.javadoc/jdk/javadoc/doclet/Taglet.html
+[`Doclet`]:             https://docs.oracle.com/en/java/javase/21/docs/api/jdk.javadoc/jdk/javadoc/doclet/Doclet.html
 [google-code-prettify]: http://code.google.com/p/google-code-prettify/
 [`build.xml`]:          ./build.xml
 [`src/net/cscott/jdoctest/JDoctest.java`]: ./src/net/cscott/jdoctest/JDoctest.java

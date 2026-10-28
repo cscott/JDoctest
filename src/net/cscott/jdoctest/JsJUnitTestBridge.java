@@ -47,9 +47,9 @@ public class JsJUnitTestBridge {
 
     public static void runDoctest(String testSource, String testText) {
         // Run each one in turn.
+        // use the same javascript environment as the JDoctest taglet
         Context cx = new JDoctest.JDoctestContextFactory().enterContext();
         try {
-            cx.setLanguageVersion(Context.VERSION_1_7); // js 1.7 by default
             boolean expect_fail = Patterns.expectFail(testText);
             Global global = new Global(); // this is also a scope.
             global.init(cx);

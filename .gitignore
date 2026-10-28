@@ -4,3 +4,4 @@ bin
 api
 src/net/cscott/jdoctest/Version.java
 build.properties
+TEST-*.txt

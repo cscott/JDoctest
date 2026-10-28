@@ -4,18 +4,22 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.DocumentationTool;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 
 import org.junit.Test;
 
 /** JUnit test bridge to generate and run the doc tests from a specific
  *  Java source file. */
 /* basic command to make things go:
- * javadoc -notree -noindex -nohelp -nonavbar -notimestamp -private -d /tmp/foo -quiet -taglet net.cscott.jdoctest.JDoctest -tagletpath jdoctest-1.4.jar:lib/rhino1_7R5pre/js.jar:bin -J-ea -classpath bin:/home/cananian/jdk1.6.0_11/lib/tools.jar:lib/rhino1_7R5pre/js.jar:lib/junit-4.6.jar src/net/cscott/jdoctest/JDoctest.java
+ * javadoc -notree -noindex -nohelp -nonavbar -notimestamp -private -d /tmp/foo -quiet -Xdoclint:none -taglet net.cscott.jdoctest.JDoctest -tagletpath jdoctest-1.6.jar:lib/rhino1_7R5pre/js.jar:bin -J-ea -classpath bin:lib/rhino1_7R5pre/js.jar:lib/junit-4.6.jar src/net/cscott/jdoctest/JDoctest.java
  */
 public class JavadocJUnitTestBridge {
     public final Class<?> klass;
@@ -53,46 +57,51 @@ public class JavadocJUnitTestBridge {
             TemporaryDirectory.deleteAll(tmpDir);
         }
     }
-    static void runDoctestWithTmpdir(Class<?> klass, File sourceFile, File tmpDir) {
-        SPWriter errWriter = new SPWriter(),
-                 warnWriter = new SPWriter(),
-                 noticeWriter = new SPWriter();
-        List<String> args = new ArrayList<String>(Arrays.asList(
+    static void runDoctestWithTmpdir(Class<?> klass, File sourceFile, File tmpDir) throws IOException {
+        SPWriter outWriter = new SPWriter();
+        DiagnosticCollector<JavaFileObject> diagnostics =
+            new DiagnosticCollector<JavaFileObject>();
+        List<String> args = Arrays.asList(
                 "-private", "-d", tmpDir.getPath(),
                 "-notree", "-noindex", "-nohelp", "-nonavbar", "-notimestamp",
-                 "-quiet",
+                 "-quiet", "-Xdoclint:none",
                  "-taglet", JDoctest.class.getName()
                  //"-tagletpath", tagletPath, "-J-ea", //XXX necessary?
                  //"-classpath", classPath, // XXX necessary?
-                 ));
-        // JDK 1.8's javadoc is stricter about html in comments
-        if (!System.getProperty("java.specification.version")
-            .matches("1\\.[0-7]"))
-            args.add("-Xdoclint:none");
-        args.add(sourceFile.getPath());
+                 );
         // provide annotation or some way to add additional arguments
         // or class path entries? (maybe for taglet path?)
-        int status = com.sun.tools.javadoc.Main.execute(
-                JavadocJUnitTestBridge.class.getSimpleName(),
-                errWriter, warnWriter, noticeWriter,
-                com.sun.tools.doclets.standard.Standard.class.getName(),
-                args.toArray(new String[args.size()]));
-        String err = errWriter.toString(),
-               warn = warnWriter.toString(),
-               notice = noticeWriter.toString();
-        // check status/contents of errWriter/warnWriter/noticeWriter
-        if (err.length() > 0) {
-            // try to identify the line number
-            int lineNum = 1;
-            Matcher m = errorLine.matcher(err);
-            if (m.find())
-                lineNum = Integer.valueOf(m.group(1));
-            throw new DoctestFailure(err, klass, sourceFile, lineNum);
+        DocumentationTool tool = ToolProvider.getSystemDocumentationTool();
+        if (tool == null)
+            throw new IllegalStateException
+                ("No javadoc tool available; is this a full JDK?");
+        StandardJavaFileManager fm =
+            tool.getStandardFileManager(diagnostics, null, null);
+        try {
+            DocumentationTool.DocumentationTask task = tool.getTask(
+                outWriter, fm, diagnostics, null /* standard doclet */,
+                args, fm.getJavaFileObjects(sourceFile));
+            task.call();
+        } finally {
+            fm.close();
         }
+        // check the reported errors
+        StringBuilder err = new StringBuilder();
+        long lineNum = -1;
+        for (Diagnostic<? extends JavaFileObject> d : diagnostics.getDiagnostics()) {
+            if (d.getKind() != Diagnostic.Kind.ERROR) continue;
+            // try to identify the line number
+            if (lineNum < 0 && d.getLineNumber() != Diagnostic.NOPOS)
+                lineNum = d.getLineNumber();
+            if (d.getSource() != null)
+                err.append(d.getSource().getName()).append(':')
+                   .append(d.getLineNumber()).append(": ");
+            err.append("error: ").append(d.getMessage(null)).append('\n');
+        }
+        if (err.length() > 0)
+            throw new DoctestFailure(err.toString(), klass, sourceFile,
+                                     (int) Math.max(1, lineNum));
     }
-    private static final Pattern errorLine =
-        Pattern.compile("^.*[.]java:(\\d+): err",
-                        Pattern.MULTILINE|Pattern.CASE_INSENSITIVE);
     private static class DoctestFailure extends Error {
         private static final long serialVersionUID = -7687329363469162375L;
 
