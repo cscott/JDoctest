@@ -55,6 +55,12 @@ needed to compile and run the tests.
   see the README.  `@Doctests` has no JUnit dependency, so (unlike
   `@RunWith`) it doesn't put JUnit on the classpath of your production
   code.
+* Each doctest is reported as a separate test, named after the member it
+  documents and linked to its line in the source file, instead of
+  reporting one test per class.  An `(EXPECT FAIL)` doctest which fails
+  is reported as aborted.  Nested classes annotated with `@Doctests` are
+  tested once, as their own container, instead of rerunning all the
+  doctests in the file.
 * `@SrcRoot("dir")` is replaced by `@Doctests(srcRoot="dir")`.  Instead of
   overriding `JDoctestRunner.defaultSrcRoot()`, set the
   `net.cscott.jdoctest.srcRoot` JUnit configuration parameter (for
@@ -75,6 +81,8 @@ needed to compile and run the tests.
   methods of the old taglet API were removed.
 * Indentation is stripped consistently across JDK versions, and doctests
   in `package.html` files have their indentation stripped too.
+* The `net.cscott.jdoctest.verbose` system property reports a note for
+  each doctest which passes.
 * Fixed a `NullPointerException` emitting standalone tests
   (`-J-Dnet.cscott.jdoctest.output=...`) for classes in the unnamed
   package.

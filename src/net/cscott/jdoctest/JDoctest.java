@@ -326,6 +326,9 @@ public class JDoctest implements Taglet {
 	    reporter.print(kind, msg);
     }
 
+    /** System property which, if true, reports a note for each doctest
+     *  which passes. */
+    static final String VERBOSE_PROPERTY = "net.cscott.jdoctest.verbose";
     private int testsExpectedPass = 0, testsExpectedFail = 0;
     private int testsUnexpectedPass = 0, testsUnexpectedFail = 0;
     private static final Pattern P_initial_ws =
@@ -352,6 +355,11 @@ public class JDoctest implements Taglet {
 	// Create Javascript context.
 	String prologue = (packageName == null) ? null :
 	    ("importPackage(Packages."+packageName+");");
+	// Rhino finds services (such as its E4X implementation) using the
+	// context class loader, which should be the one that loaded Rhino.
+	Thread thread = Thread.currentThread();
+	ClassLoader oldLoader = thread.getContextClassLoader();
+	thread.setContextClassLoader(Context.class.getClassLoader());
 	Context cx = contextFactory.enterContext();
 	try {
 	    Global global = new Global(cx); // this is also a scope.
@@ -373,7 +381,8 @@ public class JDoctest implements Taglet {
 		}
 	    } else {
 		testsExpectedPass += testsRun;
-		if (reporter!=null && false /* too noisy */)
+		// too noisy to report by default
+		if (reporter!=null && Boolean.getBoolean(VERBOSE_PROPERTY))
 		    report(Diagnostic.Kind.NOTE, sp, testsRun+" tests passed.");
 	    }
 	} catch (AssertionError e) {
@@ -384,6 +393,7 @@ public class JDoctest implements Taglet {
 	    if (fail==null) fail="<unknown failure>";
 	} finally {
 	    Context.exit();
+	    thread.setContextClassLoader(oldLoader);
 	}
 	if (fail != null) {
 	    // hack layout a bit

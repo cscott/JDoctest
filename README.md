@@ -116,6 +116,8 @@ you `--add-opens` their packages as well.
 Add `-J-Dnet.cscott.jdoctest.output=<dir>` to emit the javascript doctests
 into files in `<dir>` where they can be re-run standalone.  This is
 helpful for debugging failing tests.
+Add `-J-Dnet.cscott.jdoctest.verbose=true` to report a note for each
+doctest which passes, as well as for those which fail.
 
 ## Ant integration
 
@@ -183,8 +185,15 @@ JDoctest includes a JUnit Platform test engine (with engine ID
 `jdoctest`), which JUnit finds automatically when JDoctest is on the test
 classpath.  Whenever JUnit is asked to test a class, a package, or a
 directory of classes, this engine runs javadoc on the source file of each
-`@Doctests` class among them, and reports one test per class, which fails if
-any of that class's doctests fail.  Other classes are ignored.  Since the
+`@Doctests` class among them.  Other classes are ignored.  Each class is
+reported as a container with one test per `@doc.test` tag, named after
+the documented member (such as `twice(int)`, or `MyClass [2]` for the
+second doctest of the class itself) and linked to the tag's line in the
+source file, so your IDE can jump to a failing doctest or rerun just one.
+A doctest marked `(EXPECT FAIL)` which fails is reported as aborted, and
+one which unexpectedly passes is reported as a failure.  The doctests of a
+nested class belong to its enclosing class, unless the nested class is
+annotated with `@Doctests` itself.  Since the
 annotation marks the classes to test explicitly, the engine ignores the
 usual test class name patterns (such as `*Test`), although it honors
 package filters.
@@ -238,10 +247,10 @@ Don't use a suite like this with tools that already see your compiled
 classes, or your doctests will run twice.
 
 The `<fork>` element is necessary here, or else the embedded javadoc doesn't
-get the correct classpath: ant seems to use a classloader which knows the
-correct classpath but leaves the system property `java.class.path` set
-arbitrarily (ie, wrong), and the embedded javadoc looks at `java.class.path`,
-not its classloader, when resolving source references.
+get the correct classpath.  The engine gives javadoc the `java.class.path`
+system property, together with the classpath of the class loader which
+loaded your class, if it is a `URLClassLoader` (as the console launcher's
+is), but ant's own class loader is neither.
 
 ### Rerunning emitted tests
 
