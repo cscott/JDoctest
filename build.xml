@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="jdoctest" basedir="." default="none">
+<project name="jdoctest" basedir="." default="none"
+         xmlns:if="ant:if">
 
 <description>
 JDoctest build file.
@@ -7,6 +8,8 @@ JDoctest build file.
 <property name="package" value="jdoctest" />
 <property name="package_topdir" value="net/cscott/jdoctest" />
 <property name="version" value="2.0" /> <!-- change version # here! -->
+<property name="rhino.version" value="1.9.2" />
+<property name="junit.version" value="6.1.3" />
 
     <!-- define some variables for the script -->
     <target name="init">
@@ -17,6 +20,10 @@ JDoctest build file.
       <property name="lib_dir"            value="${basedir}/lib"/>
       <property name="src_dir"            value="${basedir}/src"/>
       <property name="classes_dir"	value="${basedir}/bin"/>
+      <property name="build_dir"	value="${basedir}/build"/>
+      <property name="jar.file"	value="${package}-${version}.jar"/>
+      <property name="annotations.jar.file"
+		value="${package}-annotations-${version}.jar"/>
       <!-- set the classpath -->
       <fileset id="jar.set" dir="lib">
         <include name="rhino-all-*.jar" />
@@ -24,7 +31,7 @@ JDoctest build file.
       <path id="classpath.path">
         <pathelement path="${classes_dir}"/>
 	<fileset refid="jar.set" />
-        <pathelement path="lib/junit-platform-console-standalone-6.1.3.jar"/>
+        <pathelement path="lib/junit-platform-console-standalone-${junit.version}.jar"/>
       </path>
     </target>
 
@@ -37,7 +44,11 @@ JDoctest build file.
             description="Removes the generated class files and javadoc">
 	<delete dir="${classes_dir}" />
 	<delete dir="${api_dir}" />
-	<delete file="${basedir}/${package}-${version}.jar" />
+	<delete dir="${build_dir}" />
+	<delete file="${basedir}/${jar.file}" />
+	<delete file="${basedir}/${annotations.jar.file}" />
+	<delete file="${basedir}/${package}-${version}.tar.gz" />
+	<delete file="${basedir}/${package}-${version}-bundle.zip" />
         <delete file="src/${package_topdir}/Version.java" />
 	<!-- test output -->
 	<delete>
@@ -121,7 +132,7 @@ JDoctest build file.
                  author="true" use="true" version="true"
 		 breakiterator="true" failonerror="true">
 	  <taglet name="net.cscott.jdoctest.JDoctest"
-		  path="${package}-${version}.jar:lib/rhino-all-1.9.2.jar"/>
+		  path="${jar.file}:lib/rhino-all-${rhino.version}.jar"/>
 	  <arg value="-J-Dnet.cscott.jdoctest.output=api/tests" />
 	  <arg value="-J-ea:net.cscott..." />
 	  <!-- the prettify hook in the page footer is javascript -->
@@ -180,12 +191,39 @@ window['JAVADOC_BASE'] = '{@docRoot}';
       </junitlauncher>
     </target>
 
-    <!-- export the project as a jar -->
+    <!-- export the project as a jar, and the @Doctests annotation as a
+         jar of its own, for production code -->
     <target name="jar" depends="compile"
             description="Exports the project as a jar">
-	<jar destfile="${basedir}/${package}-${version}.jar"
-             update="true">
+	<jar destfile="${basedir}/${jar.file}">
 		<fileset dir="${classes_dir}" />
+		<manifest>
+		  <attribute name="Automatic-Module-Name"
+			     value="net.cscott.jdoctest" />
+		  <attribute name="Main-Class"
+			     value="net.cscott.jdoctest.Version" />
+		  <attribute name="Implementation-Title" value="JDoctest" />
+		  <attribute name="Implementation-Version" value="${version}" />
+		  <attribute name="Implementation-Vendor"
+			     value="C. Scott Ananian" />
+		  <attribute name="Implementation-URL"
+			     value="https://cscott.net/Projects/JDoctest/" />
+		</manifest>
+	</jar>
+	<jar destfile="${basedir}/${annotations.jar.file}">
+		<fileset dir="${classes_dir}"
+			 includes="${package_topdir}/Doctests.class" />
+		<manifest>
+		  <attribute name="Automatic-Module-Name"
+			     value="net.cscott.jdoctest.annotations" />
+		  <attribute name="Implementation-Title"
+			     value="JDoctest annotations" />
+		  <attribute name="Implementation-Version" value="${version}" />
+		  <attribute name="Implementation-Vendor"
+			     value="C. Scott Ananian" />
+		  <attribute name="Implementation-URL"
+			     value="https://cscott.net/Projects/JDoctest/" />
+		</manifest>
 	</jar>
     </target>
 
@@ -193,22 +231,103 @@ window['JAVADOC_BASE'] = '{@docRoot}';
     <target name="build" depends="jar" description="Alias for jar target"/>
 
     <!-- bundle up all files for distribution -->
-    <target name="dist" depends="jar,javadoc">
-      <!--
-      <delete file="ChangeLog" />
-      <exec executable="cvs2cl" />
-      -->
+    <target name="dist" depends="jar,javadoc"
+	    description="Builds the release tarball">
       <tar destfile="${package}-${version}.tar.gz" compression="gzip">
         <tarfileset dir="api" prefix="${package}-${version}/api" />
         <tarfileset dir="src" prefix="${package}-${version}/src"
                     includes="**/*.java **/*.html **/*.java.in
-			      **/*.js **/*.css META-INF/**"
-                    excludes=".git" />
-        <tarfileset dir="lib" prefix="${package}-${version}/lib"
-                    excludes="CVS" />
+			      **/*.js **/*.css META-INF/**" />
+        <tarfileset dir="lib" prefix="${package}-${version}/lib" />
+        <tarfileset dir="maven" prefix="${package}-${version}/maven" />
         <tarfileset dir="." prefix="${package}-${version}"
-         includes="README.md HISTORY.md COPYING .gitignore
-                   build.xml ${package}-${version}.jar" />
+         includes="README.md HISTORY.md COPYING build.xml
+                   ${jar.file} ${annotations.jar.file}" />
       </tar>
     </target>
+
+    <!-- Maven Central: POMs, sources and javadoc jars, signatures and
+         checksums, laid out as a Maven repository and zipped into a
+         bundle for upload to https://central.sonatype.com/ .
+         Signing runs gpg; set gpg.keyname to choose the key, or
+         skip.sign to build an unsigned bundle (for testing only: Maven
+         Central rejects it). -->
+    <target name="maven" depends="jar,javadoc"
+	    description="Builds the Maven Central bundle">
+      <property name="maven_dir" value="${build_dir}/maven" />
+      <property name="repo_dir" value="${maven_dir}/net/cscott" />
+      <property name="main_dir" value="${repo_dir}/${package}/${version}" />
+      <property name="ann_dir"
+		value="${repo_dir}/${package}-annotations/${version}" />
+      <delete dir="${maven_dir}" />
+      <mkdir dir="${main_dir}" />
+      <mkdir dir="${ann_dir}" />
+      <!-- the POMs -->
+      <loadfile property="pom.common" srcfile="maven/common.xml" />
+      <copy todir="${maven_dir}">
+	<fileset dir="maven" includes="*.pom.in" />
+	<globmapper from="*.pom.in" to="*-${version}.pom" />
+        <filterset>
+         <filter token="COMMON" value="${pom.common}"/>
+         <filter token="VERSION" value="${version}"/>
+         <filter token="RHINO_VERSION" value="${rhino.version}"/>
+         <filter token="JUNIT_VERSION" value="${junit.version}"/>
+        </filterset>
+      </copy>
+      <move file="${maven_dir}/${package}-${version}.pom" todir="${main_dir}"/>
+      <move file="${maven_dir}/${package}-annotations-${version}.pom"
+	    todir="${ann_dir}"/>
+      <!-- jdoctest -->
+      <copy file="${jar.file}" todir="${main_dir}" />
+      <jar destfile="${main_dir}/${package}-${version}-sources.jar">
+        <fileset dir="${src_dir}"
+                 includes="**/*.java **/*.html **/*.js **/*.css META-INF/**" />
+      </jar>
+      <jar destfile="${main_dir}/${package}-${version}-javadoc.jar">
+        <fileset dir="${api_dir}" excludes="tests/**" />
+      </jar>
+      <!-- jdoctest-annotations -->
+      <copy file="${annotations.jar.file}" todir="${ann_dir}" />
+      <jar destfile="${ann_dir}/${package}-annotations-${version}-sources.jar">
+        <fileset dir="${src_dir}" includes="${package_topdir}/Doctests.java" />
+      </jar>
+      <delete dir="${build_dir}/annotations-api" />
+      <javadoc destdir="${build_dir}/annotations-api"
+               windowtitle="${package}-annotations ${version} documentation"
+               header="${ant.project.name} ${version}"
+               source="17" access="protected" failonerror="true"
+               bottom="Copyright &#169; 2009 C. Scott Ananian">
+        <fileset dir="${src_dir}" includes="${package_topdir}/Doctests.java" />
+        <arg value="-quiet" />
+        <arg value="-Xdoclint:all,-missing" />
+      </javadoc>
+      <jar destfile="${ann_dir}/${package}-annotations-${version}-javadoc.jar">
+        <fileset dir="${build_dir}/annotations-api" />
+      </jar>
+      <!-- signatures and checksums -->
+      <antcall target="maven-sign" />
+      <checksum algorithm="MD5" fileext=".md5" forceoverwrite="yes">
+        <fileset dir="${maven_dir}" includes="**/*.jar **/*.pom" />
+      </checksum>
+      <checksum algorithm="SHA-1" fileext=".sha1" forceoverwrite="yes">
+        <fileset dir="${maven_dir}" includes="**/*.jar **/*.pom" />
+      </checksum>
+      <zip destfile="${package}-${version}-bundle.zip" basedir="${maven_dir}"
+           includes="net/**" />
+      <echo message="Upload ${package}-${version}-bundle.zip to https://central.sonatype.com/publishing" />
+    </target>
+    <target name="maven-sign" unless="skip.sign">
+      <apply executable="gpg" failonerror="true" parallel="false">
+        <arg value="--batch" />
+        <arg value="--yes" />
+        <arg value="--armor" />
+        <arg value="--local-user=${gpg.keyname}" if:set="gpg.keyname" />
+        <arg value="--detach-sign" />
+        <srcfile />
+        <fileset dir="${build_dir}/maven" includes="**/*.jar **/*.pom" />
+      </apply>
+    </target>
+
+    <target name="release" depends="dist,maven"
+	    description="Builds all release artifacts; use 'ant clean release'"/>
 </project>

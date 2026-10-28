@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [17, 21, 25]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Install ant
+        run: sudo apt-get update && sudo apt-get install -y ant ant-optional
+      - name: Build and test
+        # javadoc runs the doctests; test reruns them through JUnit, and
+        # retest reruns the standalone tests which javadoc wrote out
+        run: ant clean javadoc test retest
+      - name: Build release artifacts
+        if: matrix.java == 17
+        run: ant release -Dskip.sign=true
+      - uses: actions/upload-artifact@v4
+        if: matrix.java == 17
+        with:
+          name: jdoctest-unsigned
+          path: |
+            jdoctest-*.jar
+            jdoctest-*.tar.gz
+            jdoctest-*-bundle.zip

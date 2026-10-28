@@ -1,7 +1,5 @@
 # JDoctest
 
-[![Build Status](https://travis-ci.org/cscott/JDoctest.png)](https://travis-ci.org/cscott/JDoctest)
-
 JDoctest is an implementation of Python's [doctest] for Java, based on the
 ideas in [`doctestj`] and [Rhino's doctests].
 
@@ -72,9 +70,16 @@ To build:
    doctests.
  * One (ignored) failure is to be expected as the tests are run; it is
    included to show the results of a failing test in the output javadoc.
+ * `ant test` runs the doctests as JUnit tests; `ant clean release` builds
+   the release tarball, the `jdoctest` and `jdoctest-annotations` jars,
+   and a bundle of both for upload to Maven Central (signed with `gpg`;
+   add `-Dgpg.keyname=...` to choose the key, or `-Dskip.sign=true` to
+   skip signing).
 
 To install:
 
+ * If your project uses Maven or Gradle, add the `net.cscott:jdoctest`
+   artifacts from Maven Central instead; see [Maven and Gradle] below.
  * Move the generated `jdoctest-*.jar` as well as `lib/rhino-all-*.jar` (Rhino 1.9.2,
    including its shell) to
    a directory in your project.  Below, we will assume
@@ -255,20 +260,16 @@ Maven's Surefire only runs test classes whose names match its patterns
 `AllDoctests` would be skipped).  Don't use a suite like this with tools
 that already see your compiled classes, or your doctests will run twice.
 
-JDoctest isn't published to Maven Central; install the jar in your local
-repository with
-```
-mvn install:install-file -Dfile=jdoctest-2.0.jar -DgroupId=net.cscott \
-    -DartifactId=jdoctest -Dversion=2.0 -Dpackaging=jar
-```
-or publish it to your own repository.  Then add JDoctest, the JUnit suite
-engine and Rhino to your build, set the source directory in
-`src/test/resources/junit-platform.properties` as shown above
-(`net.cscott.jdoctest.srcRoot=src/main/java`), and add `--add-opens` if
-your doctests access private members.  Use Rhino's `org.mozilla:rhino-tools`
-artifact, which depends on `org.mozilla:rhino`; the `rhino-all` artifact
-on Maven Central depends on those jars as well, so it would put each Rhino
-class on the classpath twice.  For Maven:
+JDoctest is published on Maven Central as two artifacts:
+`net.cscott:jdoctest-annotations`, which holds just the `@Doctests`
+annotation and has no dependencies, for your production code; and
+`net.cscott:jdoctest`, which brings in Rhino and the JUnit Platform, for
+your tests.  (The `jdoctest` jar contains the annotation too, so you only
+need the `jdoctest` jar alone if you don't use Maven or Gradle.)  Add
+both, and the JUnit suite engine, to your build, set the source
+directory in `src/test/resources/junit-platform.properties` as shown
+above (`net.cscott.jdoctest.srcRoot=src/main/java`), and add
+`--add-opens` if your doctests access private members.  For Maven:
 ```xml
   <dependencyManagement>
     <dependencies>
@@ -284,18 +285,18 @@ class on the classpath twice.  For Maven:
   <dependencies>
     <dependency>
       <groupId>net.cscott</groupId>
+      <artifactId>jdoctest-annotations</artifactId>
+      <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>net.cscott</groupId>
       <artifactId>jdoctest</artifactId>
       <version>2.0</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-suite</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mozilla</groupId>
-      <artifactId>rhino-tools</artifactId>
-      <version>1.9.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -313,12 +314,12 @@ class on the classpath twice.  For Maven:
 ```
 For Gradle (in `build.gradle.kts`):
 ```kotlin
-repositories { mavenLocal(); mavenCentral() }
+repositories { mavenCentral() }
 dependencies {
-    implementation("net.cscott:jdoctest:2.0")
+    implementation("net.cscott:jdoctest-annotations:2.0")
+    testImplementation("net.cscott:jdoctest:2.0")
     testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.platform:junit-platform-suite")
-    testImplementation("org.mozilla:rhino-tools:1.9.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 tasks.test {
@@ -326,9 +327,11 @@ tasks.test {
     jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED")
 }
 ```
-The `jdoctest` dependency is only needed at compile time, for the
-`@Doctests` annotation; if you'd rather not ship it, make it
-`provided` (Maven) or `compileOnly` plus `testImplementation` (Gradle).
+The `jdoctest` artifact depends on Rhino's `org.mozilla:rhino-tools`
+artifact (which depends on `org.mozilla:rhino`).  If you add Rhino to
+your build yourself, use the same artifacts, rather than `rhino-all`:
+`rhino-all` on Maven Central depends on those jars as well, so it would
+put each Rhino class on the classpath twice.
 
 ### Rerunning emitted tests
 
@@ -381,6 +384,7 @@ The following ant rule implements this option:
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+[Maven and Gradle]: #maven-and-gradle
 [HISTORY.md]:           HISTORY.md
 [Rhino]:                https://github.com/mozilla/rhino
 [JUnit]:                https://junit.org/

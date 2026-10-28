@@ -13,9 +13,10 @@ import java.lang.annotation.Target;
  * on the source file of each annotated class it is asked to test.
  * <p>
  * This annotation has no runtime dependencies; classes using it do not
- * need JUnit on their classpath.
- *
- * @see JDoctestEngine
+ * need JUnit on their classpath.  It is also published on its own, as
+ * the <code>net.cscott:jdoctest-annotations</code> Maven artifact, so
+ * that production code which uses it needn't depend on JDoctest (and its
+ * JavaScript engine) outside of its tests.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -23,7 +24,7 @@ import java.lang.annotation.Target;
 public @interface Doctests {
     /**
      * The directory containing the source file of the annotated class.
-     * If empty (the default), the {@value JDoctestEngine#SRC_ROOT_PARAMETER}
+     * If empty (the default), the <code>net.cscott.jdoctest.srcRoot</code>
      * JUnit configuration parameter is used, or else "src".
      */
     String srcRoot() default "";

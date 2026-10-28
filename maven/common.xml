@@ -1,0 +1,30 @@
+  <url>https://cscott.net/Projects/JDoctest/</url>
+  <inceptionYear>2009</inceptionYear>
+
+  <licenses>
+    <license>
+      <name>GNU General Public License, version 2 or later</name>
+      <url>https://www.gnu.org/licenses/old-licenses/gpl-2.0.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>cscott</id>
+      <name>C. Scott Ananian</name>
+      <url>https://cscott.net/</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/cscott/JDoctest.git</connection>
+    <developerConnection>scm:git:git@github.com:cscott/JDoctest.git</developerConnection>
+    <url>https://github.com/cscott/JDoctest</url>
+    <tag>jdoctest-@VERSION@</tag>
+  </scm>
+
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/cscott/JDoctest/issues</url>
+  </issueManagement>

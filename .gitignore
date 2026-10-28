@@ -5,3 +5,5 @@ api
 src/net/cscott/jdoctest/Version.java
 build.properties
 TEST-*.txt
+build
+jdoctest-*.zip

@@ -1,6 +1,6 @@
 # JDoctest history
 
-## 2.0
+## 2.0 (2026-10-28)
 
 JDoctest 2.0 is a port to modern JDKs.  Upgraders from 1.x should be
 aware of the following changes.
@@ -77,6 +77,10 @@ needed to compile and run the tests.
 
 ### Other changes
 
+* JDoctest is published on Maven Central, as `net.cscott:jdoctest` and
+  `net.cscott:jdoctest-annotations` (just the `@Doctests` annotation, for
+  production code).  `ant release` builds the Maven Central bundle.
+* Travis CI was replaced by GitHub Actions.
 * `JDoctest.register(Map)` and the `inField()`, `inMethod()` (etc)
   methods of the old taglet API were removed.
 * Indentation is stripped consistently across JDK versions, and doctests
