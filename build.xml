@@ -206,7 +206,7 @@ window['JAVADOC_BASE'] = '{@docRoot}';
         <tarfileset dir="lib" prefix="${package}-${version}/lib"
                     excludes="CVS" />
         <tarfileset dir="." prefix="${package}-${version}"
-         includes="README AUTHORS COPYING ChangeLog NEWS .gitignore
+         includes="README README.md AUTHORS COPYING ChangeLog NEWS .gitignore
                    build.xml ${package}-${version}.jar
 		   sample.build.properties" />
       </tar>

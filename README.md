@@ -63,8 +63,10 @@ public class JDoctest implements Taglet { ... }
 ## Build and install
 
 To build:
- * You must have a JDK 1.5 or greater.  In JDoctest version 1.5 I removed
-   support for pre-1.5 JDKs.
+ * You must have a JDK between 1.5 and 9.  In JDoctest version 1.5 I
+   removed support for pre-1.5 JDKs.  JDK 10 removed the
+   `com.sun.tools.doclets` taglet API which JDoctest 1.x uses; JDoctest 2.0
+   supports JDK 17 and later.
    * In older JDKs, you might need to copy `sample.build.properties`
    to `build.properties` and edit it to properly reflect that path to
    your JDK, so that we can find the JDK's `tools.jar` file.
@@ -97,6 +99,17 @@ The above command-line assumes that your source code has been compiled
 into `bin`; change that part of the `-tagletpath` if your classes are
 elsewhere.  Your compiled `.class` files must be included on the
 `tagletpath` so that we can run the doctests.
+
+On JDK 8 and later, add `-Xdoclint:none` to the javadoc command line, or
+javadoc's own checks will reject the `js>` prompts in your doctests.
+JDK 8u121 and later also need `--allow-script-in-comments` if you use
+the `<script>` tags for syntax highlighting described below.
+
+On JDK 9, also add
+`-J--add-opens=jdk.javadoc/com.sun.tools.javadoc.main=ALL-UNNAMED`.
+Without it, JDoctest can't find javadoc's error reporter: failing
+doctests are printed to standard error, and javadoc exits as soon as a
+doctest fails.
 
 Note that you need to use the `-J-ea` option if you want assertions to
 be enabled during the evaluation of the doctests.  You can use
