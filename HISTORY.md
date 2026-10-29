@@ -8,6 +8,8 @@
   do on JDK 7 or later).  If you copied `src/doc-files` into your own
   project, use the new `loadpretty.js`, and copy it into your javadoc
   output directory.
+* Fixed a stray `<code>` tag in the description of one of JDoctest's own
+  doctests.  (Doctest descriptions are plain text, not HTML.)
 
 ## 2.0 (2026-10-28)
 

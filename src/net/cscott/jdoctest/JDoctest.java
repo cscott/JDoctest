@@ -100,7 +100,7 @@ import jdk.javadoc.doclet.Taglet;
  *   squares: 1, 4, 9
  * @doc.test
  *   We can even access private members!  (On JDK 16 and later, this
- *   requires <code>--add-opens java.base/java.lang=ALL-UNNAMED</code>.)
+ *   requires --add-opens java.base/java.lang=ALL-UNNAMED.)
  *   js> new JDoctest().testsExpectedPass
  *   0
  */
