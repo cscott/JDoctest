@@ -192,21 +192,47 @@ public class JDoctest implements Taglet {
                taglet.docErrorReporter = (DocErrorReporter)
                    f.get(config);
            } catch (Throwable t) { /* ignore */ }
-       if (taglet.docErrorReporter == null) {
-           // if taglet.docErrorReporter is still null, we'll do the compatible
-           // thing and just emit errors to stderr
-           //System.err.println("WARNING: No error reporter!");
-       }
+       // if taglet.docErrorReporter is still null, we'll look for one
+       // when we are given our first tag (JDK 1.8)
        if (tagletMap.containsKey(taglet.getName())) {
            tagletMap.remove(taglet.getName());
        }
        tagletMap.put(taglet.getName(), taglet);
-       if (taglet.docErrorReporter!=null && !versionPrinted) {
-	   taglet.docErrorReporter.printNotice
+       taglet.printVersion();
+    }
+    private void printVersion() {
+       if (docErrorReporter!=null && !versionPrinted) {
+	   docErrorReporter.printNotice
 	       (Version.PACKAGE_STRING+"; "+
 		"Bug reports to "+Version.PACKAGE_BUGREPORT);
 	   versionPrinted = true;
        }
+    }
+    /**
+     * Another evil hack: fetch the error reporter of the javadoc
+     * environment from the given <code>Doc</code>, since JDK 1.8's
+     * standard doclet no longer makes its configuration available
+     * statically.  If none can be found, we'll do the compatible
+     * thing and just emit errors to stderr.
+     */
+    private void findErrorReporter(Doc d) {
+       try {
+           //docErrorReporter = ((DocImpl)d).env.messager;
+           Object env = getField(d, "env");
+           Object messager = getField(env, "messager");
+           if (messager instanceof DocErrorReporter)
+               docErrorReporter = (DocErrorReporter) messager;
+       } catch (Throwable t) { /* ignore */ }
+       printVersion();
+    }
+    private static Object getField(Object o, String name) throws Exception {
+       for (Class<?> c = o.getClass(); c != null; c = c.getSuperclass())
+           try {
+               Field f = c.getDeclaredField(name);
+               f.setAccessible(true);
+               return f.get(o);
+           } catch (NoSuchFieldException e) { /* try superclass */ }
+       throw new NoSuchFieldException(name);
     }
     /**
      * Given the <code>Tag</code> representation of this custom
@@ -224,6 +250,8 @@ public class JDoctest implements Taglet {
      */
     public String toString(Tag[] tags) {
 	if (tags.length == 0) return "";
+	if (docErrorReporter == null)
+	    findErrorReporter(tags[0].holder());
 	StringBuilder sb = new StringBuilder();
 	sb.append("<dt><b>Tests:</b></dt><dd>");
 	for (int i=0; i<tags.length; i++) {
