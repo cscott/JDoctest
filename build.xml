@@ -153,6 +153,11 @@ window['JAVADOC_BASE'] = '{@docRoot}';
           ]]></bottom>
           <!-- javadoc links to the JDK API docs by default -->
 	</javadoc>
+	<!-- javadoc only copies the doc-files of packages, so copy the
+	     prettify hook ourselves -->
+	<copy todir="${api_dir}/doc-files">
+	  <fileset dir="${src_dir}/doc-files" />
+	</copy>
     </target>
 
     <!-- run all tests -->

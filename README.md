@@ -153,8 +153,10 @@ You may want to add css rules to make the output prettier.  JDoctest has
 hooks to allow the use of [google-code-prettify],
 which will do syntax highlighting on the client side.  The [`build.xml`]
 file for JDoctest shows how this might be hooked up.  The files in
-`src/doc-files` should be copied to a `doc-files` subdirectory of the top-level
-source directory of your project.
+`src/doc-files` should be copied to a `doc-files` subdirectory of your
+javadoc output directory, after running javadoc.  (Javadoc only copies
+the `doc-files` directories of packages, not the one at the top of your
+source directory.)
 
 ## JUnit test support
 

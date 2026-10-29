@@ -6,11 +6,8 @@ lnk.setAttribute("href",window['JAVADOC_BASE']+"doc-files/prettify.css");
 document.getElementsByTagName("head")[0].appendChild(lnk);
 // load pretty print code.
 document.write('<script type="text/javascript" src="'+window['JAVADOC_BASE']+'doc-files/prettify.js"></script>');
-// hook into on-load function.
-orig_onload = window.onload;
-window.onload = function() {
-    orig_onload(); // call original onload function
-    // invoke google's pretty printer
+// invoke google's pretty printer once the page has loaded.
+window.addEventListener("load", function() {
     window['prettyPrint']();
-}
+});
 // done!

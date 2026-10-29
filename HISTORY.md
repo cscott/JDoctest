@@ -1,5 +1,14 @@
 # JDoctest history
 
+## 2.1 (unreleased)
+
+* Fixed syntax highlighting of doctests in the generated javadoc: the
+  prettify files are copied into the javadoc output, and `loadpretty.js`
+  works on javadoc pages which don't set `window.onload` (none of them
+  do on JDK 7 or later).  If you copied `src/doc-files` into your own
+  project, use the new `loadpretty.js`, and copy it into your javadoc
+  output directory.
+
 ## 2.0 (2026-10-28)
 
 JDoctest 2.0 is a port to modern JDKs.  Upgraders from 1.x should be
