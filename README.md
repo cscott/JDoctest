@@ -369,7 +369,7 @@ The following ant rule implements this option:
 ## LICENSE
 
     JDoctest, a doctest module for javadoc.
-    Copyright (C) 2009,2014 C. Scott Ananian <cscott@cscott.net>
+    Copyright (C) 2009-2026 C. Scott Ananian <cscott@cscott.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

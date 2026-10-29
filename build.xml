@@ -127,7 +127,7 @@ JDoctest build file.
 		 doctitle="JDoctest"
                  header="${ant.project.name} ${version}"
 		 source="17"
-		 bottom="Copyright (c) 2009 C. Scott Ananian"
+		 bottom="Copyright (c) 2009-2026 C. Scott Ananian"
                  access="protected" nodeprecated="false"
                  author="true" use="true" version="true"
 		 breakiterator="true" failonerror="true">
@@ -144,7 +144,7 @@ JDoctest build file.
 	  <!-- fancy google code prettify support: see
 	       http://code.google.com/p/google-code-prettify/ -->
 	  <bottom><![CDATA[
-             Copyright &copy; 2009 C. Scott Ananian
+             Copyright &copy; 2009-2026 C. Scott Ananian
 <script type="text/javascript">
 window['JAVADOC_BASE'] = '{@docRoot}';
 </script>
@@ -296,7 +296,7 @@ window['JAVADOC_BASE'] = '{@docRoot}';
                windowtitle="${package}-annotations ${version} documentation"
                header="${ant.project.name} ${version}"
                source="17" access="protected" failonerror="true"
-               bottom="Copyright &#169; 2009 C. Scott Ananian">
+               bottom="Copyright &#169; 2009-2026 C. Scott Ananian">
         <fileset dir="${src_dir}" includes="${package_topdir}/Doctests.java" />
         <arg value="-quiet" />
         <arg value="-Xdoclint:all,-missing" />

@@ -1,6 +1,6 @@
 /*
  * JDocTaglet.
- * Copyright (c) 2009 C. Scott Ananian <cscott@cscott.net>
+ * Copyright (c) 2009-2026 C. Scott Ananian <cscott@cscott.net>
  *
  * Licensed under the terms of the GNU GPL v2 or later; see COPYING for details.
  */
