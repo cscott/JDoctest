@@ -8,8 +8,9 @@ aware of the following changes.
 ### Requirements
 
 * JDK 17 or later is required.  JDoctest is now a
-  `jdk.javadoc.doclet.Taglet`; the `com.sun.javadoc` taglet API which
-  1.x used was removed in JDK 13.  `tools.jar` is no longer needed.
+  `jdk.javadoc.doclet.Taglet`; the `com.sun.tools.doclets` taglet API
+  which 1.x used was removed in JDK 10, and the rest of the old
+  `com.sun.javadoc` API in JDK 13.  `tools.jar` is no longer needed.
 * The JavaScript engine is now [Rhino] 1.9.2, shipped as
   `lib/rhino-all-1.9.2.jar`.  Put it on your `-tagletpath` in place of
   the old `js.jar`.
@@ -93,7 +94,7 @@ needed to compile and run the tests.
 
 ## 1.7 (2026-10-28)
 
-The last release of the 1.x line, which runs on JDK 1.5 through 12.
+The last release of the 1.x line, which runs on JDK 1.5 through 9.
 
 * Doctests can access private and protected Java members.
 * A failing doctest shows a word-by-word diff of the expected and actual
@@ -101,6 +102,13 @@ The last release of the 1.x line, which runs on JDK 1.5 through 12.
 * Fixed whitespace stripping when the second line of a doctest is a
   continuation (`>`) line.
 * Updated Rhino to 1.7R5pre.
+* Runs on JDK 8 and 9: failing doctests are reported through javadoc's
+  error reporter again.  On JDK 8 and later, run javadoc with
+  `-Xdoclint:none`; on JDK 9, also with
+  `-J--add-opens=jdk.javadoc/com.sun.tools.javadoc.main=ALL-UNNAMED`.
+  See the 1.7 README.
+* Emitted doctests rerun by `RerunJDoctests` can access private members
+  too.
 
 ## 1.6 (2014-03-31)
 

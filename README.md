@@ -63,8 +63,9 @@ public class JDoctest implements Taglet { ... }
 
 To build:
  * You must have JDK 17 or greater.  JDoctest uses the `jdk.javadoc.doclet`
-   taglet API; the old `com.sun.javadoc` API it used through version 1.7
-   was removed in JDK 13.  If you are upgrading from JDoctest 1.x,
+   taglet API; the old `com.sun.tools.doclets` taglet API it used
+   through version 1.7 was removed in JDK 10.  (JDoctest 1.7 supports
+   JDK 1.5 through 9.)  If you are upgrading from JDoctest 1.x,
    see [HISTORY.md] for changes which may affect your doctests.
  * Run `ant javadoc`, which will build the source code and then run its
    doctests.
