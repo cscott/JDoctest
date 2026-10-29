@@ -17,6 +17,16 @@ JDoctest build file.
       <property name="lib_dir"            value="${basedir}/lib"/>
       <property name="src_dir"            value="${basedir}/src"/>
       <property name="classes_dir"	value="${basedir}/bin"/>
+      <!-- JDK 1.8's javadoc needs permission to put the prettify script
+           in the page footer, and is stricter about html in comments -->
+      <condition property="javadoc.args" value=""
+                 else="--allow-script-in-comments -Xdoclint:none">
+        <or>
+          <equals arg1="${ant.java.version}" arg2="1.5" />
+          <equals arg1="${ant.java.version}" arg2="1.6" />
+          <equals arg1="${ant.java.version}" arg2="1.7" />
+        </or>
+      </condition>
       <!-- set the classpath -->
       <fileset id="jar.set" dir="lib">
         <include name="rhino*/js.jar" />
@@ -122,6 +132,7 @@ JDoctest build file.
 		  path="${package}-${version}.jar:lib/rhino1_7R5pre/js.jar"/>
 	  <arg value="-J-Dnet.cscott.jdoctest.output=api/tests" />
 	  <arg value="-J-ea:net.cscott..." />
+	  <arg line="${javadoc.args}" />
 	  <classpath refid="classpath.path" />
 	  <!-- fancy google code prettify support: see
 	       http://code.google.com/p/google-code-prettify/ -->

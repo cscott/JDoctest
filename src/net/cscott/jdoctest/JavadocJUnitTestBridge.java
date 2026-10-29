@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,21 +57,26 @@ public class JavadocJUnitTestBridge {
         SPWriter errWriter = new SPWriter(),
                  warnWriter = new SPWriter(),
                  noticeWriter = new SPWriter();
-        String[] args = {
+        List<String> args = new ArrayList<String>(Arrays.asList(
                 "-private", "-d", tmpDir.getPath(),
                 "-notree", "-noindex", "-nohelp", "-nonavbar", "-notimestamp",
                  "-quiet",
-                 "-taglet", JDoctest.class.getName(),
+                 "-taglet", JDoctest.class.getName()
                  //"-tagletpath", tagletPath, "-J-ea", //XXX necessary?
                  //"-classpath", classPath, // XXX necessary?
-                 sourceFile.getPath() };
+                 ));
+        // JDK 1.8's javadoc is stricter about html in comments
+        if (!System.getProperty("java.specification.version")
+            .matches("1\\.[0-7]"))
+            args.add("-Xdoclint:none");
+        args.add(sourceFile.getPath());
         // provide annotation or some way to add additional arguments
         // or class path entries? (maybe for taglet path?)
         int status = com.sun.tools.javadoc.Main.execute(
                 JavadocJUnitTestBridge.class.getSimpleName(),
                 errWriter, warnWriter, noticeWriter,
                 com.sun.tools.doclets.standard.Standard.class.getName(),
-                args);
+                args.toArray(new String[args.size()]));
         String err = errWriter.toString(),
                warn = warnWriter.toString(),
                notice = noticeWriter.toString();
