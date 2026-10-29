@@ -289,12 +289,12 @@ above (`net.cscott.jdoctest.srcRoot=src/main/java`), and add
     <dependency>
       <groupId>net.cscott</groupId>
       <artifactId>jdoctest-annotations</artifactId>
-      <version>2.0</version>
+      <version>2.1</version>
     </dependency>
     <dependency>
       <groupId>net.cscott</groupId>
       <artifactId>jdoctest</artifactId>
-      <version>2.0</version>
+      <version>2.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -319,8 +319,8 @@ For Gradle (in `build.gradle.kts`):
 ```kotlin
 repositories { mavenCentral() }
 dependencies {
-    implementation("net.cscott:jdoctest-annotations:2.0")
-    testImplementation("net.cscott:jdoctest:2.0")
+    implementation("net.cscott:jdoctest-annotations:2.1")
+    testImplementation("net.cscott:jdoctest:2.1")
     testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.platform:junit-platform-suite")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

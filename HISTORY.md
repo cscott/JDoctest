@@ -1,6 +1,6 @@
 # JDoctest history
 
-## 2.1 (unreleased)
+## 2.1 (2026-10-29)
 
 * Fixed syntax highlighting of doctests in the generated javadoc: the
   prettify files are copied into the javadoc output, and `loadpretty.js`
