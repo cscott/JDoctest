@@ -81,8 +81,8 @@ import com.sun.tools.doclets.Taglet;
  *   java.lang.Object@1ac2f9c
  * @doc.test
  *   We can even access private members!
- *   js> JDoctest.versionPrinted
- *   true
+ *   js> new JDoctest().testsExpectedPass
+ *   0
  */
 @RunWith(value=JDoctestRunner.class)
 public class JDoctest implements Taglet {
